@@ -16,5 +16,5 @@ out vec3 something;
 void main(void)
 {
 	something = vec3(0.0);
-    gl_Position = vec4(vertex_position, 1.0);
+    gl_Position = vec4(vertex_position, 1.0) * mystery_xform;
 }

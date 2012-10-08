@@ -14,5 +14,5 @@ out vec4 fragment_colour;
 
 void main(void)
 {
-    fragment_colour = vec4(1.0, 0.0, 0.0, 1.0);
+    fragment_colour = vec4(((sin(time_seconds) + 1) * 0.5f), 0.0, ((cos(time_seconds) + 1) * 0.5f), 1.0);
 }
