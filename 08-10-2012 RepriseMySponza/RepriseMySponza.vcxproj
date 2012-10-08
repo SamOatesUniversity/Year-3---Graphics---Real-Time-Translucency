@@ -97,6 +97,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CCamera.h" />
     <ClInclude Include="framework\FileHelper.hpp" />
     <ClInclude Include="framework\tgl.h" />
     <ClInclude Include="framework\Window.hpp" />
@@ -107,6 +108,7 @@
     <ClInclude Include="TcfScene.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CCamera.cpp" />
     <ClCompile Include="framework\FileHelper.cpp" />
     <ClCompile Include="framework\tgl.c" />
     <ClCompile Include="framework\Window.cpp" />

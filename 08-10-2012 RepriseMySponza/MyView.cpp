@@ -5,18 +5,21 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-MyView::
-MyView()
+MyView::MyView() : m_camera(nullptr)
 {
     scene_.reset(new TcfScene());
 }
 
-MyView::
-~MyView() {
+MyView::~MyView() 
+{
+	if (m_camera != nullptr)
+	{
+		delete m_camera;
+		m_camera = nullptr;
+	}
 }
 
-void MyView::
-windowViewWillStart(std::shared_ptr<tyga::Window> window)
+void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 {
     start_time_ = std::chrono::system_clock::now();
 
@@ -110,10 +113,11 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 
     glEnable(GL_DEPTH_TEST);
+
+	m_camera = new CCamera();
 }
 
-void MyView::
-reloadShaders()
+void MyView::reloadShaders()
 {
     if (shading_.vertex_shader != 0) {
         glDeleteShader(shading_.vertex_shader);
@@ -167,16 +171,14 @@ reloadShaders()
     glLinkProgram(shading_.program);
 }
 
-void MyView::
-windowViewDidReset(std::shared_ptr<tyga::Window> window,
+void MyView::windowViewDidReset(std::shared_ptr<tyga::Window> window,
                    int width,
                    int height)
 {
     glViewport(0, 0, width, height);
 }
 
-void MyView::
-windowViewDidStop(std::shared_ptr<tyga::Window> window)
+void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
     if (shading_.vertex_shader != 0) {
         glDeleteShader(shading_.vertex_shader);
@@ -193,9 +195,10 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
      */
 }
 
-void MyView::
-windowViewRender(std::shared_ptr<tyga::Window> window)
+void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 {
+	m_camera->Update();
+
     glClearColor(0.f, 0.f, 0.25f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -227,11 +230,8 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		const TcfScene::Model model = scene_->model(modelIndex);
 		const Mesh mesh = meshes_[model.mesh_index];
 
-		glm::mat4 viewMatrix = glm::translate(
-									glm::mat4(1.0f), 
-									glm::vec3(0.0f, -10.0f, 0.f)
-								);
-		glm::mat4 projectionMatrix = glm::perspective(60.0f, aspect_ratio, 0.1f, 1000.f);
+		const glm::mat4 viewMatrix = m_camera->GetViewMatrix();
+		const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
 
 		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
 		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &viewMatrix[0][0]);

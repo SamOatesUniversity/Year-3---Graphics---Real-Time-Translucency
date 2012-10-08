@@ -1,5 +1,6 @@
 #pragma once
 #include "WindowControlDelegate.hpp"
+#include <glm/glm.hpp>
 
 class MyView;
 
@@ -53,5 +54,7 @@ private:
 
 private:
 	std::shared_ptr<MyView> view_;
+
+	glm::vec2				m_lastMouse;
 
 };

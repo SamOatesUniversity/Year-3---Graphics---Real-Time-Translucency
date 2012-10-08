@@ -22,6 +22,9 @@
     <ClCompile Include="TcfScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\MyController.hpp">
@@ -46,6 +49,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="TcfScene.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

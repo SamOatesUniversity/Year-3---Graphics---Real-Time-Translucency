@@ -7,6 +7,7 @@ MyController::
 MyController()
 {
 	view_.reset(new MyView());
+	m_lastMouse = glm::vec2(-1, -1);
 }
 
 MyController::
@@ -34,6 +35,20 @@ windowControlMouseMoved(std::shared_ptr<tyga::Window> window,
                         int x,
                         int y)
 {
+	glm::vec2 mouseDif = glm::vec2(x, y) - m_lastMouse;
+
+	if (mouseDif.x != 0 || mouseDif.y != 0)
+	{
+		if (CCamera *const camera = view_->getCamera())
+		{
+			glm::vec3 turnAmount(0.0f, 0.0f, 0.0f);
+			turnAmount.x = mouseDif.y;
+			turnAmount.y = mouseDif.x;
+			camera->Turn(turnAmount);
+		}
+	}
+
+	m_lastMouse = glm::vec2(x, y);
 }
 
 void MyController::
@@ -55,15 +70,48 @@ windowControlKeyboardChanged(std::shared_ptr<tyga::Window> window,
                              int key_index,
                              bool down)
 {
-    if (down == false) {
-        return;
-    }
-
     switch (key_index) {
-    case tyga::kWindowKeyF5:
-        std::cout << "Reloading shaders ..." << std::endl;
-        view_->reloadShaders();
-        break;
+		case tyga::kWindowKeyF5:
+		{
+			if (!down)
+				return;
+
+			std::cout << "Reloading shaders ..." << std::endl;
+			view_->reloadShaders();
+		}
+		break;
+
+		// handle w and up keys
+		case 87:
+		case tyga::kWindowKeyUp:
+		{
+			view_->getCamera()->isForwardKey = down;
+		}
+		break;
+
+		// handle s and down keys
+		case 83:
+		case tyga::kWindowKeyDown:
+		{
+			view_->getCamera()->isBackKey = down;
+		}
+		break;
+
+		// handle d and right keys
+		case 68:
+		case tyga::kWindowKeyRight:
+		{
+			view_->getCamera()->isRightKey = down;
+		}
+		break;
+
+		// handle a and left keys
+		case 65:
+		case tyga::kWindowKeyLeft:
+		{
+			view_->getCamera()->isLeftKey = down;
+		}
+		break;
     }
 }
 

@@ -7,6 +7,8 @@
 #include <vector>
 #include <memory>
 
+#include "CCamera.h"
+
 class TcfScene;
 
 class MyView : public tyga::WindowViewDelegate
@@ -19,6 +21,8 @@ public:
 
     void
     reloadShaders();
+
+	CCamera *getCamera() const { return m_camera; }
 
 private:
 
@@ -86,4 +90,6 @@ private:
      */
     std::shared_ptr<TcfScene> scene_;
 
+
+	CCamera							*m_camera;					//!< An instance of a camera object, used to explore the scene							
 };
