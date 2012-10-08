@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include=".\MyController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include=".\MyView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\Window.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\FileHelper.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\tgl.c">
+      <Filter>Framework</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include=".\MyController.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MyView.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\Window.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\WindowControlDelegate.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\WindowViewDelegate.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\FileHelper.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\tgl.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="first_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="first_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{7d9a518e-bcee-48cb-80a4-1c91d5d1d5e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{cbea5698-34ad-4b1a-a2ba-e75002e1800e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6f10090a-dff7-4d1b-a6c9-9004e849a35d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{67222cb8-4d90-4a6e-bc74-212109e48c9c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
