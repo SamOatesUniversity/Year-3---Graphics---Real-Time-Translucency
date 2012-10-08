@@ -30,10 +30,10 @@ readFile(std::string filepath)
         for (const auto& model : mesh.instanceArray) {
             Model new_model;
             new_model.mesh_index = meshes_.size();
-            new_model.xform = glm::mat4x3(model.m00, model.m01, model.m02,
-                                          model.m10, model.m11, model.m12,
-                                          model.m20, model.m21, model.m22,
-                                          model.m30, model.m31, model.m32);
+            new_model.xform = glm::mat4(  model.m00, model.m01, model.m02, 0.0f,
+                                          model.m10, model.m11, model.m12, 0.0f,
+                                          model.m20, model.m21, model.m22, 0.0f,
+                                          model.m30, model.m31, model.m32, 1.0f);
             models_.push_back(new_model);
         }
         Mesh new_mesh;

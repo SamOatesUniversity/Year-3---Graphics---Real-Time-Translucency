@@ -1,6 +1,19 @@
 #version 330
 
+uniform mat4 projectionMatrix;  
+uniform mat4 viewMatrix;  
+uniform mat4 worldMatrix;  
+
+in vec3 vertex_position;
+in vec3 vertex_normal;
+
+out vec3 normal;
+
 void main(void)
 {
-    gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_Position = worldMatrix * vec4(vertex_position, 1.0);
+	gl_Position = viewMatrix * gl_Position;
+	gl_Position = projectionMatrix * gl_Position;
+
+	normal = vertex_normal;
 }

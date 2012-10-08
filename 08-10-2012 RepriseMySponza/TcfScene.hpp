@@ -35,7 +35,7 @@ public:
     struct Model
     {
         unsigned int mesh_index;
-        glm::mat4x3 xform;
+        glm::mat4 xform;
     };
 
     int
