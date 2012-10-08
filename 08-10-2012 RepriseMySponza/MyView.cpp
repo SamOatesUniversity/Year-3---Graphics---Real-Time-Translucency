@@ -30,6 +30,15 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
      * Tutorial exercise: Create vertex buffers to hold the Sponza geometry.
      */
 
+	const int noofMeshes = scene_->meshCount();
+	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
+	{
+		const TcfScene::Mesh mesh = scene_->mesh(meshIndex);
+		
+
+
+	}
+
     glEnable(GL_DEPTH_TEST);
 }
 

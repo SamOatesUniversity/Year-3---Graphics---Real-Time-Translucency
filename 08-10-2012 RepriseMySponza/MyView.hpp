@@ -57,6 +57,8 @@ private:
         /*
          * Tutorial exercise: design your vertex data structure
          */
+
+		glm::vec3 position;
     };
 
     struct Mesh
