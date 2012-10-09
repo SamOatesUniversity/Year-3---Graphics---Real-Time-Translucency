@@ -51,6 +51,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>.\framework;.\include;$(IncludePath)</IncludePath>
     <LibraryPath>.\lib;$(LibraryPath)</LibraryPath>
+    <IntDir>$(Configuration)\objs\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
