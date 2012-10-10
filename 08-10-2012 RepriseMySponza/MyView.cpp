@@ -71,9 +71,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		);
 
 		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-
-		glBindBuffer(GL_ARRAY_BUFFER, mesh.vertex_vbo);
 		glVertexAttribPointer(
 			0, 
 			3, 
@@ -83,7 +80,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 			TGL_BUFFER_OFFSET(0)
 		);
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh.vertex_vbo);
+		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(
 			1, 
 			3, 
@@ -103,7 +100,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 			GL_STATIC_DRAW
 		);
 		mesh.element_count = noofElements;
-		glBindVertexArray(0);
 
 		meshes_.push_back(mesh);
 
@@ -224,18 +220,17 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
      *                    as well.
      */
 
+	const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+
 	const int noofModels = scene_->modelCount();
 	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
 	{
 		const TcfScene::Model model = scene_->model(modelIndex);
 		const Mesh mesh = meshes_[model.mesh_index];
 
-		const glm::mat4 viewMatrix = m_camera->GetViewMatrix();
-		const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
-
 		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &viewMatrix[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
 
 		glBindVertexArray(mesh.vao);
 		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
