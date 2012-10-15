@@ -25,6 +25,9 @@
     <ClCompile Include="CCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SOGIgl.cpp">
+      <Filter>Source Files\SOGI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\MyController.hpp">
@@ -54,6 +57,9 @@
     <ClInclude Include="CCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SOGIgl.h">
+      <Filter>Header Files\SOGI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="reprise_fs.glsl">
@@ -78,6 +84,12 @@
     <Filter Include="Shader Files">
       <UniqueIdentifier>{67222cb8-4d90-4a6e-bc74-212109e48c9c}</UniqueIdentifier>
       <Extensions>*.glsl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\SOGI">
+      <UniqueIdentifier>{52e202f0-421a-4ab8-a909-057f2419a660}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SOGI">
+      <UniqueIdentifier>{27af8930-1d18-4e3e-905f-de5af52f654c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

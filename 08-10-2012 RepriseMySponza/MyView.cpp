@@ -5,9 +5,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-MyView::MyView() : m_camera(nullptr)
+MyView::MyView() :	m_camera(nullptr)
 {
     scene_.reset(new TcfScene());
+	m_shadow.texture = NULL;
 }
 
 MyView::~MyView() 
@@ -29,6 +30,38 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
         std::cerr << "Failed to read sponza.tcf data file" << std::endl;
     }
 
+	// Create a texture to render too
+	//Size of shadow map
+	static const int shadowMapSize = 512;
+
+	//Create the shadow map texture
+	glGenTextures(1, &m_shadow.texture);
+    glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexImage2D(
+		GL_TEXTURE_2D, 
+		0, 
+		GL_DEPTH_COMPONENT, 
+		shadowMapSize, 
+		shadowMapSize, 
+		0,
+        GL_DEPTH_COMPONENT, 
+		GL_UNSIGNED_BYTE, 
+		NULL
+	);
+
+	glGenFramebuffers(1, &m_shadow.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadow.texture, 0);
+
+
+	// Load the scene
 	const int noofMeshes = scene_->meshCount();
 	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
 	{
@@ -121,36 +154,18 @@ void MyView::reloadShaders()
         glDeleteProgram(shading_.program);
     }
 
-    GLint compile_status = 0;
+	if (m_shadow.shader.vertex_shader)
+		glDeleteShader(m_shadow.shader.vertex_shader);
+	if (m_shadow.shader.vertex_shader)
+		glDeleteShader(m_shadow.shader.fragment_shader);
+	if (m_shadow.shader.vertex_shader)
+		glDeleteProgram(m_shadow.shader.program);
     
-    shading_.vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    std::string vertex_shader_string = tyga::stringFromFile("reprise_vs.glsl");
-    const char *vertex_shader_code = vertex_shader_string.c_str();
-    glShaderSource(shading_.vertex_shader, 1,
-                   (const GLchar **) &vertex_shader_code, NULL);
-    glCompileShader(shading_.vertex_shader);
-    glGetShaderiv(shading_.vertex_shader, GL_COMPILE_STATUS, &compile_status);
-    if (compile_status != GL_TRUE) {
-        const int string_length = 1024;
-        GLchar log[string_length]= "";
-        glGetShaderInfoLog(shading_.vertex_shader, string_length, NULL, log);
-        std::cerr << log << std::endl;
-    }
- 
-    shading_.fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string fragment_shader_string = tyga::stringFromFile("reprise_fs.glsl");
-    const char *fragment_shader_code = fragment_shader_string.c_str();
-    glShaderSource(shading_.fragment_shader, 1,
-                   (const GLchar **) &fragment_shader_code, NULL);
-    glCompileShader(shading_.fragment_shader);
-    glGetShaderiv(shading_.fragment_shader, GL_COMPILE_STATUS, &compile_status);
-    if (compile_status != GL_TRUE) {
-        const int string_length = 1024;
-        GLchar log[string_length]= "";
-        glGetShaderInfoLog(shading_.fragment_shader, string_length, NULL, log);
-        std::cerr << log << std::endl;
-    }
- 
+	// scene shaders
+
+	loadVertexShader("reprise_vs.glsl", shading_.vertex_shader);
+	loadFragmentShader("reprise_fs.glsl", shading_.fragment_shader);
+  
     shading_.program = glCreateProgram();
     glAttachShader(shading_.program, shading_.vertex_shader);
 	glBindAttribLocation(shading_.program, 0, "vertex_position");
@@ -160,6 +175,16 @@ void MyView::reloadShaders()
 	glBindFragDataLocation(shading_.program, 0, "fragment_colour");
 
     glLinkProgram(shading_.program);
+
+	// shadow shaders
+	loadVertexShader("shadow_vs.glsl", m_shadow.shader.vertex_shader);
+	loadFragmentShader("shadow_fs.glsl", m_shadow.shader.fragment_shader);
+
+	m_shadow.shader.program = glCreateProgram();
+    glAttachShader(m_shadow.shader.program, m_shadow.shader.vertex_shader);
+	glAttachShader(m_shadow.shader.program, m_shadow.shader.fragment_shader);
+	glLinkProgram(m_shadow.shader.program);
+
 }
 
 void MyView::windowViewDidReset(std::shared_ptr<tyga::Window> window,
@@ -181,6 +206,13 @@ void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
         glDeleteProgram(shading_.program);
     }
 
+	if (m_shadow.shader.vertex_shader)
+		glDeleteShader(m_shadow.shader.vertex_shader);
+	if (m_shadow.shader.vertex_shader)
+		glDeleteShader(m_shadow.shader.fragment_shader);
+	if (m_shadow.shader.vertex_shader)
+		glDeleteProgram(m_shadow.shader.program);
+
 	for (Mesh mesh : meshes_)
 	{
 		glDeleteBuffers(1, &mesh.vertex_vbo);
@@ -194,38 +226,59 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 {
 	m_camera->Update();
 
-    glClearColor(0.f, 0.f, 0.25f, 0.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    GLint link_status;
-    glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
-    if (link_status != GL_TRUE) {
-        return;
-    }
-
-    glUseProgram(shading_.program);
-
-    GLint viewport_size[4];
+	GLint viewport_size[4];
     glGetIntegerv(GL_VIEWPORT, viewport_size);
     const float aspect_ratio = viewport_size[2] / (float)viewport_size[3];
 
-    const auto clock_time = std::chrono::system_clock::now() - start_time_;
+	const auto clock_time = std::chrono::system_clock::now() - start_time_;
     const auto clock_millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(clock_time);
     const float time_seconds = 0.001f * clock_millisecs.count();
 
-	const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+	GLint link_status;
 
-	const int noofModels = scene_->modelCount();
-	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	// draw the scene
 	{
-		const TcfScene::Model model = scene_->model(modelIndex);
-		const Mesh mesh = meshes_[model.mesh_index];
+		glClearColor(0.f, 0.f, 0.25f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+		glGetProgramiv(m_shadow.shader.program, GL_LINK_STATUS, &link_status);
+		if (link_status != GL_TRUE)
+			return;
 
-		glBindVertexArray(mesh.vao);
-		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		glUseProgram(m_shadow.shader.program);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+
+		// ******************************************************************************
+
+		glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
+		if (link_status != GL_TRUE)
+			return;
+
+		glUseProgram(shading_.program);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+
+		const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+
+		const int noofModels = scene_->modelCount();
+		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		{
+			const TcfScene::Model model = scene_->model(modelIndex);
+			const Mesh mesh = meshes_[model.mesh_index];
+
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+			glBindVertexArray(mesh.vao);
+			glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
 	}
 }

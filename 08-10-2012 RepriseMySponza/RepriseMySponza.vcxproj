@@ -106,6 +106,7 @@
     <ClInclude Include="framework\WindowViewDelegate.hpp" />
     <ClInclude Include="MyView.hpp" />
     <ClInclude Include=".\MyController.hpp" />
+    <ClInclude Include="SOGIgl.h" />
     <ClInclude Include="TcfScene.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -116,6 +117,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include=".\MyView.cpp" />
     <ClCompile Include=".\MyController.cpp" />
+    <ClCompile Include="SOGIgl.cpp" />
     <ClCompile Include="TcfScene.cpp" />
   </ItemGroup>
   <ItemGroup>

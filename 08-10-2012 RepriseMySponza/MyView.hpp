@@ -2,11 +2,13 @@
 
 #include "WindowViewDelegate.hpp"
 #include "tgl.h"
+
 #include <glm/glm.hpp>
 #include <chrono>
 #include <vector>
 #include <memory>
 
+#include "SOGIgl.h"
 #include "CCamera.h"
 
 class TcfScene;
@@ -80,5 +82,11 @@ private:
     std::shared_ptr<TcfScene> scene_;
 
 
-	CCamera							*m_camera;					//!< An instance of a camera object, used to explore the scene							
+	CCamera							*m_camera;					//!< An instance of a camera object, used to explore the scene		
+
+	struct {
+		GLuint						texture;					//!< The GL Id of our shadow texture
+		GLuint						frameBuffer;				//!< 
+		ShaderProgram				shader;						//!< The shading program to use with shadow rendering
+	} m_shadow;
 };
