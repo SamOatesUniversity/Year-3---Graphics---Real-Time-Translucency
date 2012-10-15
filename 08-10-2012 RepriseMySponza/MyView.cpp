@@ -157,12 +157,11 @@ void MyView::reloadShaders()
  
     shading_.program = glCreateProgram();
     glAttachShader(shading_.program, shading_.vertex_shader);
-    glAttachShader(shading_.program, shading_.fragment_shader);
+	glBindAttribLocation(shading_.program, 0, "vertex_position");
+	glBindAttribLocation(shading_.program, 1, "vertex_normal");
 
-    /*
-     * Tutorial exercise: Bind vertex input attributes and fragment output
-     *                    attributes in your shaders before linking
-     */
+    glAttachShader(shading_.program, shading_.fragment_shader);
+	glBindFragDataLocation(shading_.program, 0, "fragment_colour");
 
     glLinkProgram(shading_.program);
 }
@@ -189,6 +188,14 @@ void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
     /*
      * Tutorial exercise: delete any GL resources you've made
      */
+
+	for (Mesh mesh : meshes_)
+	{
+		glDeleteBuffers(1, &mesh.vertex_vbo);
+		glDeleteBuffers(1, &mesh.element_vbo);
+		glDeleteVertexArrays(1, &mesh.vao);
+	}
+
 }
 
 void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
