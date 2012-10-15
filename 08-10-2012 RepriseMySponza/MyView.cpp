@@ -29,10 +29,6 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
         std::cerr << "Failed to read sponza.tcf data file" << std::endl;
     }
 
-    /*
-     * Tutorial exercise: Create vertex buffers to hold the Sponza geometry.
-     */
-
 	const int noofMeshes = scene_->meshCount();
 	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
 	{
@@ -185,10 +181,6 @@ void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
         glDeleteProgram(shading_.program);
     }
 
-    /*
-     * Tutorial exercise: delete any GL resources you've made
-     */
-
 	for (Mesh mesh : meshes_)
 	{
 		glDeleteBuffers(1, &mesh.vertex_vbo);
@@ -220,12 +212,6 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
     const auto clock_time = std::chrono::system_clock::now() - start_time_;
     const auto clock_millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(clock_time);
     const float time_seconds = 0.001f * clock_millisecs.count();
-
-    /*
-     * Tutorial exercise: construct projection, view and model matrices and
-     *                    send them to your shaders.  Update other uniforms
-     *                    as well.
-     */
 
 	const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
 	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);

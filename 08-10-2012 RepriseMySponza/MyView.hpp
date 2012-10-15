@@ -58,10 +58,6 @@ private:
 
     struct Vertex
     {
-        /*
-         * Tutorial exercise: design your vertex data structure
-         */
-
 		glm::vec3 position;
 		glm::vec3 normal;
     };
@@ -78,16 +74,9 @@ private:
                  vao(0),
                  element_count(0) {}
     };
-    /*
-     * Tutorial: notice you've been given an array this time because
-     *           Sponza is composed of multiple meshes.
-     */
+
     std::vector<Mesh> meshes_;
 
-    /*
-     * Tutorial: use this object to obtain the Sponza scene geometry
-     *           and model data.
-     */
     std::shared_ptr<TcfScene> scene_;
 
 
