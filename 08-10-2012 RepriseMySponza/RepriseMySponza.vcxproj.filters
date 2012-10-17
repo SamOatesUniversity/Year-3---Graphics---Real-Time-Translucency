@@ -28,6 +28,9 @@
     <ClCompile Include="SOGIgl.cpp">
       <Filter>Source Files\SOGI</Filter>
     </ClCompile>
+    <ClCompile Include="CLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include=".\MyController.hpp">
@@ -60,12 +63,21 @@
     <ClInclude Include="SOGIgl.h">
       <Filter>Header Files\SOGI</Filter>
     </ClInclude>
+    <ClInclude Include="CLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="reprise_fs.glsl">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="reprise_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shadow_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shadow_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

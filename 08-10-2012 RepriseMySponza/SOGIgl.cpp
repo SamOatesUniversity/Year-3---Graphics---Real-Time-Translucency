@@ -3,7 +3,7 @@
 static const int string_length = 1024;
 
 /*
-*	\brief 
+*	\brief Load a vertex shader
 */
 const bool loadVertexShader(
 		char *shader,				//!<
@@ -38,7 +38,7 @@ const bool loadVertexShader(
 }
 
 /*
-*	\brief 
+*	\brief Load a fragment shader
 */
 const bool loadFragmentShader(
 		char *shader,				//!< 

@@ -35,30 +35,38 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	static const int shadowMapSize = 512;
 
 	//Create the shadow map texture
-	glGenTextures(1, &m_shadow.texture);
-    glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
-	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexImage2D(
-		GL_TEXTURE_2D, 
-		0, 
-		GL_DEPTH_COMPONENT, 
-		shadowMapSize, 
-		shadowMapSize, 
-		0,
-        GL_DEPTH_COMPONENT, 
-		GL_UNSIGNED_BYTE, 
-		NULL
-	);
-
+	// The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
 	glGenFramebuffers(1, &m_shadow.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadow.texture, 0);
+	// Depth texture. Slower than a depth buffer, but you can sample it later in your shader
+	glGenTextures(1, &m_shadow.texture);
+	glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_shadow.texture, 0);
+
+	glDrawBuffer(GL_NONE); // No color buffer is drawn to.
+
+	// Enable depth test
+	glEnable(GL_DEPTH_TEST);
+
+	// Accept fragment if it closer to the camera than the former one
+	glDepthFunc(GL_LESS);
+
+	// Cull triangles which normal is not towards the camera
+	glEnable(GL_CULL_FACE);
+
+
+	// Always check that our framebuffer is ok
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		return;
 
 
 	// Load the scene
@@ -170,7 +178,7 @@ void MyView::reloadShaders()
     glAttachShader(shading_.program, shading_.vertex_shader);
 	glBindAttribLocation(shading_.program, 0, "vertex_position");
 	glBindAttribLocation(shading_.program, 1, "vertex_normal");
-
+	
     glAttachShader(shading_.program, shading_.fragment_shader);
 	glBindFragDataLocation(shading_.program, 0, "fragment_colour");
 
@@ -182,7 +190,11 @@ void MyView::reloadShaders()
 
 	m_shadow.shader.program = glCreateProgram();
     glAttachShader(m_shadow.shader.program, m_shadow.shader.vertex_shader);
+	glBindAttribLocation(shading_.program, 0, "vertex_position");
+
 	glAttachShader(m_shadow.shader.program, m_shadow.shader.fragment_shader);
+	glBindFragDataLocation(shading_.program, 0, "fragment_colour");
+
 	glLinkProgram(m_shadow.shader.program);
 
 }
@@ -236,36 +248,20 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	GLint link_status;
 
-	// draw the scene
+	CLight light(45.0f, 1.0f, glm::vec3(0, 100, 0), glm::vec3(1, 0, 0));
+
+	glClearColor(0.f, 0.f, 0.0f, 0.25f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// make the shadow thingy
 	{
-		glClearColor(0.f, 0.f, 0.25f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glGetProgramiv(m_shadow.shader.program, GL_LINK_STATUS, &link_status);
-		if (link_status != GL_TRUE)
-			return;
-
-		glUseProgram(m_shadow.shader.program);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
-
-
-
-		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
-
-		// ******************************************************************************
-
 		glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
 		if (link_status != GL_TRUE)
 			return;
 
-		glUseProgram(shading_.program);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
-
-		const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+		glGetProgramiv(m_shadow.shader.program, GL_LINK_STATUS, &link_status);
+		if (link_status != GL_TRUE)
+			return;
 
 		const int noofModels = scene_->modelCount();
 		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
@@ -273,12 +269,70 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 			const TcfScene::Model model = scene_->model(modelIndex);
 			const Mesh mesh = meshes_[model.mesh_index];
 
-			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+			// render to the depth texture
+
+			glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+
+			glUseProgram(m_shadow.shader.program);
+			glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "viewMatrix"), 1, GL_FALSE, &light.getView()[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "projectionMatrix"), 1, GL_FALSE, &light.getProjection()[0][0]); 
+			glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
 
 			glBindVertexArray(mesh.vao);
 			glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
-		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+			// render to the screen
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			glUseProgram(shading_.program);
+
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+			const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+			const glm::mat4 modleLighhtVP = light.getProjection() * light.getView() * model.xform;
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "light_view_projection_xform"), 1, GL_FALSE, &modleLighhtVP[0][0]);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
+			glUniform1i(glGetUniformLocation(shading_.program, "shadowTexture"), 0);
+
+			glBindVertexArray(mesh.vao);					
+			glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		}
 	}
+
+	//// draw the scene
+	//{
+	//	glClearColor(0.f, 0.f, 0.25f, 0.f);
+	//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//	glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
+	//	if (link_status != GL_TRUE)
+	//		return;
+
+	//	glUseProgram(shading_.program);
+
+	//	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+
+	//	const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+	//	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+	//	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+
+	//	const int noofModels = scene_->modelCount();
+	//	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	//	{
+	//		const TcfScene::Model model = scene_->model(modelIndex);
+	//		const Mesh mesh = meshes_[model.mesh_index];
+
+	//		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+	//		glBindVertexArray(mesh.vao);
+	//		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+	//	}
+
+	//	glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+	//}
 }

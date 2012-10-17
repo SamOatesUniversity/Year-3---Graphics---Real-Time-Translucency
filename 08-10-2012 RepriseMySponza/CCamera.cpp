@@ -5,8 +5,8 @@
 */
 CCamera::CCamera()
 {
-	m_position = glm::vec3(0.0f, 0.0f, 0.0f);
-	m_rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	m_position = glm::vec3(0.0f, -100.0f, 0.0f);
+	m_rotation = glm::vec3(0.0f, 270.0f, 0.0f);
 
 	isForwardKey = false;
 	isBackKey = false;

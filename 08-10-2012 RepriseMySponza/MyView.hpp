@@ -10,6 +10,7 @@
 
 #include "SOGIgl.h"
 #include "CCamera.h"
+#include "CLight.h"
 
 class TcfScene;
 
