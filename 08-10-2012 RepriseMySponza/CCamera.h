@@ -55,5 +55,6 @@ public:
 	bool						isBackKey;									//!< Stores if the back key is pressed
 	bool						isRightKey;									//!< Stores if the right key is pressed
 	bool						isLeftKey;									//!< Stores if the left key is pressed
+	bool						isMouseDown;								//!< 
 
 };

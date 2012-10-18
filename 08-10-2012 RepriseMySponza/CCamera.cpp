@@ -5,13 +5,14 @@
 */
 CCamera::CCamera()
 {
-	m_position = glm::vec3(0.0f, -100.0f, 0.0f);
-	m_rotation = glm::vec3(0.0f, 270.0f, 0.0f);
+	m_position = glm::vec3(0.0f, -75.0f, 0.0f);
+	m_rotation = glm::vec3(0.0f, 90.0f, 0.0f);
 
 	isForwardKey = false;
 	isBackKey = false;
 	isRightKey = false;
 	isLeftKey = false;
+	isMouseDown = false;
 }
 
 /*
@@ -91,4 +92,3 @@ void CCamera::Update()
 		Move(glm::vec3(glm::sin(m_rotation.y * -0.017f) * -SPEED, glm::sin(m_rotation.x * -0.017f) * SPEED, glm::cos(m_rotation.y * 0.017f) * -SPEED));
 	}
 }
-

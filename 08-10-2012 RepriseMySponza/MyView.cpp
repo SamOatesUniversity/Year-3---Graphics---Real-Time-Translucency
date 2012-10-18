@@ -32,7 +32,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	// Create a texture to render too
 	//Size of shadow map
-	static const int shadowMapSize = 512;
+	static const int shadowMapSize = 2048;
 
 	//Create the shadow map texture
 	// The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
@@ -43,10 +43,10 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	glGenTextures(1, &m_shadow.texture);
 	glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowMapSize, shadowMapSize, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -54,20 +54,9 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	glDrawBuffer(GL_NONE); // No color buffer is drawn to.
 
-	// Enable depth test
-	glEnable(GL_DEPTH_TEST);
-
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS);
-
-	// Cull triangles which normal is not towards the camera
-	glEnable(GL_CULL_FACE);
-
-
 	// Always check that our framebuffer is ok
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		return;
-
 
 	// Load the scene
 	const int noofMeshes = scene_->meshCount();
@@ -146,6 +135,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 
     glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	m_camera = new CCamera();
 }
@@ -248,7 +238,7 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	GLint link_status;
 
-	CLight light(45.0f, 1.0f, glm::vec3(0, 100, 0), glm::vec3(1, 0, 0));
+	CLight light(45.0f, 1.0f, glm::vec3(0, 75, 0), glm::vec3(1, 0, 0));
 
 	glClearColor(0.f, 0.f, 0.0f, 0.25f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -272,6 +262,7 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 			// render to the depth texture
 
 			glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+			glViewport(0, 0, 2048, 2048);
 
 			glUseProgram(m_shadow.shader.program);
 			glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "viewMatrix"), 1, GL_FALSE, &light.getView()[0][0]);
@@ -284,6 +275,7 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 			// render to the screen
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, viewport_size[2], viewport_size[3]);
 
 			glUseProgram(shading_.program);
 
@@ -292,8 +284,8 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
 			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
 
-			const glm::mat4 modleLighhtVP = light.getProjection() * light.getView() * model.xform;
-			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "light_view_projection_xform"), 1, GL_FALSE, &modleLighhtVP[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightViewXform"), 1, GL_FALSE, &light.getView()[0][0]);
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightProjectionXform"), 1, GL_FALSE, &light.getProjection()[0][0]);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, m_shadow.texture);

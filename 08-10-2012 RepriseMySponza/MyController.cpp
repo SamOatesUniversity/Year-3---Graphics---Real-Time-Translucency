@@ -37,18 +37,19 @@ windowControlMouseMoved(std::shared_ptr<tyga::Window> window,
 {
 	glm::vec2 mouseDif = glm::vec2(x, y) - m_lastMouse;
 
+	m_lastMouse = glm::vec2(x, y);
+
+	CCamera *const camera = view_->getCamera();
+	if (!camera || !camera->isMouseDown)
+		return;
+
 	if (mouseDif.x != 0 || mouseDif.y != 0)
 	{
-		if (CCamera *const camera = view_->getCamera())
-		{
-			glm::vec3 turnAmount(0.0f, 0.0f, 0.0f);
-			turnAmount.x = mouseDif.y;
-			turnAmount.y = mouseDif.x;
-			camera->Turn(turnAmount);
-		}
+		glm::vec3 turnAmount(0.0f, 0.0f, 0.0f);
+		turnAmount.x = mouseDif.y * 0.1f;
+		turnAmount.y = mouseDif.x * 0.1f;
+		camera->Turn(turnAmount);
 	}
-
-	m_lastMouse = glm::vec2(x, y);
 }
 
 void MyController::
@@ -56,6 +57,10 @@ windowControlMouseButtonChanged(std::shared_ptr<tyga::Window> window,
                                 int button_index,
                                 bool down)
 {
+	if (CCamera *const camera = view_->getCamera())
+	{
+		camera->isMouseDown = down;
+	}
 }
 
 
