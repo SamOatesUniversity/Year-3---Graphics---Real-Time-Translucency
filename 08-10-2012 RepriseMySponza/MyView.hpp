@@ -89,5 +89,6 @@ private:
 		GLuint						texture;					//!< The GL Id of our shadow texture
 		GLuint						frameBuffer;				//!< 
 		ShaderProgram				shader;						//!< The shading program to use with shadow rendering
+		int							shadowMapSize;				//!< 
 	} m_shadow;
 };
