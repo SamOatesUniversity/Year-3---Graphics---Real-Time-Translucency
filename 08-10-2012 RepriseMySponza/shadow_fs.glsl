@@ -1,9 +1,5 @@
 #version 330
 
-uniform mat4 projectionMatrix;  
-uniform mat4 viewMatrix;  
-uniform mat4 worldMatrix;  
-
 in vec4 vertexPos;
 
 out vec4 fragment_colour;

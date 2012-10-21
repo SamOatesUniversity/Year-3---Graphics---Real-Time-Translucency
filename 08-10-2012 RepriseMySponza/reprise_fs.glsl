@@ -72,7 +72,7 @@ vec3 Shadow(float bias, int level_of_filtering, int kernal )
         for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
 		{
             float light_to_first_hit_depth = texture(shadowTexture, shadow_texcoord + vec2( x / shadowMapSize, y / shadowMapSize )).x;
-            shadowing += (light_to_first_hit_depth+bias) < light_to_point_depth ? 0.4f : 1.0f;
+            shadowing += ((light_to_first_hit_depth+bias) < light_to_point_depth) ? 0.4f : 1.0f;
             count += 1.0f;
         }
 	}
@@ -85,7 +85,7 @@ void main(void)
 	vec3 colourOutput = vec3( 0.0f, 0.0f, 0.0f );
 
 	colourOutput += SpotLight();
-	colourOutput *= Shadow(0.000004f, 1, 1);
+	colourOutput *= Shadow(0.0000025f, 1, 1);
 
     fragment_colour = vec4(colourOutput.x, colourOutput.y, colourOutput.z, 1.0);
 }

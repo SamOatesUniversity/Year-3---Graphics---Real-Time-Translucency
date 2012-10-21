@@ -32,7 +32,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	// Create a texture to render too
 	//Size of shadow map
-	m_shadow.shadowMapSize = 256;
+	m_shadow.shadowMapSize = 512;
 
 	//Create the shadow map texture
 	// The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
