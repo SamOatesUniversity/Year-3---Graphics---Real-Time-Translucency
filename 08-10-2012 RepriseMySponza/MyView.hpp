@@ -92,7 +92,7 @@ private:
 		int							shadowMapSize;				//!< THe size of the shadow map texture
 	} m_shadow;
 
-
+	ShaderProgram					m_ambient;					//!< The ambient shader
 
 	std::vector<CLight*>			m_lights;					//!< A vector of lights in the scene
 };

@@ -32,7 +32,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	// Create a texture to render too
 	//Size of shadow map
-	m_shadow.shadowMapSize = 512;
+	m_shadow.shadowMapSize = 1024;
 
 	//Create the shadow map texture
 	// The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
@@ -154,15 +154,15 @@ void MyView::reloadShaders()
         glDeleteProgram(shading_.program);
     }
 
-	if (m_shadow.shader.vertex_shader)
-		glDeleteShader(m_shadow.shader.vertex_shader);
-	if (m_shadow.shader.vertex_shader)
-		glDeleteShader(m_shadow.shader.fragment_shader);
-	if (m_shadow.shader.vertex_shader)
-		glDeleteProgram(m_shadow.shader.program);
+	if (m_shadow.shader.vertex_shader) glDeleteShader(m_shadow.shader.vertex_shader);
+	if (m_shadow.shader.vertex_shader) glDeleteShader(m_shadow.shader.fragment_shader);
+	if (m_shadow.shader.vertex_shader) glDeleteProgram(m_shadow.shader.program);
     
-	// scene shaders
+	if (m_ambient.vertex_shader) glDeleteShader(m_ambient.vertex_shader);
+	if (m_ambient.vertex_shader) glDeleteShader(m_ambient.fragment_shader);
+	if (m_ambient.vertex_shader) glDeleteProgram(m_ambient.program);
 
+	// scene shaders
 	loadVertexShader("reprise_vs.glsl", shading_.vertex_shader);
 	loadFragmentShader("reprise_fs.glsl", shading_.fragment_shader);
   
@@ -189,6 +189,20 @@ void MyView::reloadShaders()
 
 	glLinkProgram(m_shadow.shader.program);
 
+	// ambient shader
+	loadVertexShader("ambient_vs.glsl", m_ambient.vertex_shader);
+	loadFragmentShader("ambient_fs.glsl", m_ambient.fragment_shader);
+
+	m_ambient.program = glCreateProgram();
+
+	glAttachShader(m_ambient.program, m_ambient.vertex_shader);
+	glBindAttribLocation(m_ambient.program, 0, "vertex_position");
+
+	glAttachShader(m_ambient.program, m_ambient.fragment_shader);
+	glBindFragDataLocation(m_ambient.program, 0, "fragment_colour");
+
+	glLinkProgram(m_ambient.program);
+
 }
 
 void MyView::windowViewDidReset(std::shared_ptr<tyga::Window> window,
@@ -210,12 +224,13 @@ void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
         glDeleteProgram(shading_.program);
     }
 
-	if (m_shadow.shader.vertex_shader)
-		glDeleteShader(m_shadow.shader.vertex_shader);
-	if (m_shadow.shader.vertex_shader)
-		glDeleteShader(m_shadow.shader.fragment_shader);
-	if (m_shadow.shader.vertex_shader)
-		glDeleteProgram(m_shadow.shader.program);
+	if (m_shadow.shader.vertex_shader) glDeleteShader(m_shadow.shader.vertex_shader);
+	if (m_shadow.shader.fragment_shader) glDeleteShader(m_shadow.shader.fragment_shader);
+	if (m_shadow.shader.program) glDeleteProgram(m_shadow.shader.program);
+
+	if (m_ambient.vertex_shader) glDeleteShader(m_ambient.vertex_shader);
+	if (m_ambient.fragment_shader) glDeleteShader(m_ambient.fragment_shader);
+	if (m_ambient.program) glDeleteProgram(m_ambient.program);
 
 	for (Mesh mesh : meshes_)
 	{
@@ -223,6 +238,9 @@ void MyView::windowViewDidStop(std::shared_ptr<tyga::Window> window)
 		glDeleteBuffers(1, &mesh.element_vbo);
 		glDeleteVertexArrays(1, &mesh.vao);
 	}
+
+	for (CLight *const light : m_lights)
+		delete light;
 
 }
 
@@ -238,8 +256,10 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
     const auto clock_millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(clock_time);
     const float time_seconds = 0.001f * clock_millisecs.count();
 
+	const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+
 	for (CLight *const light : m_lights)
-		light->setPosition(glm::vec3(0, 50 + glm::sin(time_seconds * 0.5f) * 50.0f, 0));
+		light->setPosition(glm::vec3(0, 50 + glm::sin(time_seconds * 0.5f) * 25.0f, 0));
 
 	GLint link_status = NULL;
 	glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
@@ -250,20 +270,56 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 	if (link_status != GL_TRUE)
 		return;
 
+	glGetProgramiv(m_ambient.program, GL_LINK_STATUS, &link_status);
+	if (link_status != GL_TRUE)
+		return;	
+
+	// draw ambient
+	glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+	glViewport(0, 0, viewport_size[2], viewport_size[3]);
+	glClearColor(0.0f, 0.f, 0.25f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDisable(GL_BLEND);
+
+	glUseProgram(m_ambient.program);
+
+	glUniformMatrix4fv(glGetUniformLocation(m_ambient.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(m_ambient.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+
+	const int noofModels = scene_->modelCount();
+	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	{
+		const TcfScene::Model model = scene_->model(modelIndex);
+		const Mesh mesh = meshes_[model.mesh_index];
+
+		glUniformMatrix4fv(glGetUniformLocation(m_ambient.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+		glBindVertexArray(mesh.vao);					
+		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+	}
+
+	// draw for each light
 	for (CLight *const light : m_lights)
 	{
 		// render to the depth texture
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
 		glViewport(0, 0, m_shadow.shadowMapSize, m_shadow.shadowMapSize);
-
 		glClearColor(0.f, 0.f, 0.0f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LEQUAL);
+		glDisable(GL_BLEND);
 
 		glUseProgram(m_shadow.shader.program);
 		glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "viewMatrix"), 1, GL_FALSE, &light->getView()[0][0]);
 		glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "projectionMatrix"), 1, GL_FALSE, &light->getProjection()[0][0]); 
 
-		const int noofModels = scene_->modelCount();
 		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
 		{
 			const TcfScene::Model model = scene_->model(modelIndex);
@@ -279,12 +335,14 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
 		glViewport(0, 0, viewport_size[2], viewport_size[3]);
 
-		glClearColor(1.0f, 0.f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		//glDepthMask(GL_FALSE);
+		glDepthFunc(GL_EQUAL);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
 
 		glUseProgram(shading_.program);
 
-		static const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
 		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
 		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
 
@@ -297,7 +355,6 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 		glUniform3f(glGetUniformLocation(shading_.program, "light.direction"), light->getDirection().x, light->getDirection().y, light->getDirection().z);
 		glUniform1f(glGetUniformLocation(shading_.program, "light.coneAngle"), light->getLight().coneAngle * 0.017f);
 		
-
 		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
 		{
 			const TcfScene::Model model = scene_->model(modelIndex);

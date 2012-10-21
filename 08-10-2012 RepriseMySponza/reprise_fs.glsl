@@ -62,14 +62,14 @@ vec3 Shadow(float bias, int level_of_filtering, int kernal )
 
 	vec2 shadow_texcoord = (hpos_from_light.xy / hpos_from_light.w) * 0.5f + 0.5f;
 
-    float shadowing = 0.3f;
+    float shadowing = 0.0f;
     float count = 0.0f;
     for( int x = -level_of_filtering; x <= level_of_filtering; x += kernal )
 	{
         for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
 		{
             float light_to_first_hit_depth = texture(shadowTexture, shadow_texcoord + vec2( x / shadowMapSize, y / shadowMapSize )).x;
-            shadowing += ((light_to_first_hit_depth+bias) < light_to_point_depth) ? 0.4f : 1.0f;
+            shadowing += ((light_to_first_hit_depth+bias) < light_to_point_depth) ? 0.0f : 1.0f;
             count += 1.0f;
         }
 	}

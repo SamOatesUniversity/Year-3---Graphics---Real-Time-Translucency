@@ -57,7 +57,7 @@ glm::mat4 CLight::getProjection()
 		m_light.coneAngle,
 		1.0f,
 		0.1f,
-		250.0f
+		200.0f
 		);
 
 	return projectionXform;
