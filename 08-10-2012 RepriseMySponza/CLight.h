@@ -11,9 +11,9 @@
 #define MAP_SIZE	2048
 
 struct Light {
-	float			coneAngle; // radians
 	glm::vec3		position;
 	glm::vec3		direction;
+	float			coneAngle;
 	float			intensity;
 };
 
@@ -49,4 +49,14 @@ public:
 												return m_light; 
 											}
 
+											//!< 
+	void									setPosition( 
+												glm::vec3 &position 
+											);
+
+
+	glm::vec3								getDirection()
+											{
+												return m_light.direction;
+											}
 };

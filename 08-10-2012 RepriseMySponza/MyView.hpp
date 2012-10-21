@@ -87,8 +87,12 @@ private:
 
 	struct {
 		GLuint						texture;					//!< The GL Id of our shadow texture
-		GLuint						frameBuffer;				//!< 
+		GLuint						frameBuffer;				//!< The open GL frame buffer used for the depth texture
 		ShaderProgram				shader;						//!< The shading program to use with shadow rendering
-		int							shadowMapSize;				//!< 
+		int							shadowMapSize;				//!< THe size of the shadow map texture
 	} m_shadow;
+
+
+
+	std::vector<CLight*>			m_lights;					//!< A vector of lights in the scene
 };

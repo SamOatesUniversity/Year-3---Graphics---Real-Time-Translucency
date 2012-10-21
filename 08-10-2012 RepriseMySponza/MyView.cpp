@@ -42,7 +42,7 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	glGenTextures(1, &m_shadow.texture);
 	glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, m_shadow.shadowMapSize, m_shadow.shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_shadow.shadowMapSize, m_shadow.shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
@@ -137,6 +137,9 @@ void MyView::windowViewWillStart(std::shared_ptr<tyga::Window> window)
     glEnable(GL_DEPTH_TEST);
 
 	m_camera = new CCamera();
+
+	CLight *const newLight = new CLight(60.0f, 1.0f, glm::vec3(0, 50, 0), glm::vec3(1, 0, 0));
+	m_lights.push_back(newLight);
 }
 
 void MyView::reloadShaders()
@@ -235,10 +238,10 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
     const auto clock_millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(clock_time);
     const float time_seconds = 0.001f * clock_millisecs.count();
 
-	GLint link_status;
+	for (CLight *const light : m_lights)
+		light->setPosition(glm::vec3(0, 50 + glm::sin(time_seconds * 0.5f) * 50.0f, 0));
 
-	CLight light(45.0f, 1.0f, glm::vec3(0, 75, 0), glm::vec3(1, 0, 0));
-
+	GLint link_status = NULL;
 	glGetProgramiv(shading_.program, GL_LINK_STATUS, &link_status);
 	if (link_status != GL_TRUE)
 		return;
@@ -247,60 +250,67 @@ void MyView::windowViewRender(std::shared_ptr<tyga::Window> window)
 	if (link_status != GL_TRUE)
 		return;
 
-	// render to the depth texture
-	glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
-	glViewport(0, 0, m_shadow.shadowMapSize, m_shadow.shadowMapSize);
-
-	glClearColor(0.f, 0.f, 0.0f, 1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(m_shadow.shader.program);
-	glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "viewMatrix"), 1, GL_FALSE, &light.getView()[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "projectionMatrix"), 1, GL_FALSE, &light.getProjection()[0][0]); 
-	
-	const int noofModels = scene_->modelCount();
-	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	for (CLight *const light : m_lights)
 	{
-		const TcfScene::Model model = scene_->model(modelIndex);
-		const Mesh mesh = meshes_[model.mesh_index];
+		// render to the depth texture
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadow.frameBuffer);
+		glViewport(0, 0, m_shadow.shadowMapSize, m_shadow.shadowMapSize);
 
-		glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+		glClearColor(0.f, 0.f, 0.0f, 1.0f);
+		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glBindVertexArray(mesh.vao);
-		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		glUseProgram(m_shadow.shader.program);
+		glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "viewMatrix"), 1, GL_FALSE, &light->getView()[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "projectionMatrix"), 1, GL_FALSE, &light->getProjection()[0][0]); 
+
+		const int noofModels = scene_->modelCount();
+		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		{
+			const TcfScene::Model model = scene_->model(modelIndex);
+			const Mesh mesh = meshes_[model.mesh_index];
+
+			glUniformMatrix4fv(glGetUniformLocation(m_shadow.shader.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+			glBindVertexArray(mesh.vao);
+			glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		}
+
+		// render the scene
+		glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+		glViewport(0, 0, viewport_size[2], viewport_size[3]);
+
+		glClearColor(1.0f, 0.f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glUseProgram(shading_.program);
+
+		static const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
+
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightViewXform"), 1, GL_FALSE, &light->getView()[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightProjectionXform"), 1, GL_FALSE, &light->getProjection()[0][0]);
+
+		glUniform1f(glGetUniformLocation(shading_.program, "shadowMapSize"), static_cast<float>(m_shadow.shadowMapSize)); 
+
+		glUniform3f(glGetUniformLocation(shading_.program, "light.position"), light->getPosition().x, light->getPosition().y, light->getPosition().z);
+		glUniform3f(glGetUniformLocation(shading_.program, "light.direction"), light->getDirection().x, light->getDirection().y, light->getDirection().z);
+		glUniform1f(glGetUniformLocation(shading_.program, "light.coneAngle"), light->getLight().coneAngle * 0.017f);
+		
+
+		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		{
+			const TcfScene::Model model = scene_->model(modelIndex);
+			const Mesh mesh = meshes_[model.mesh_index];
+
+			glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
+			glUniform1i(glGetUniformLocation(shading_.program, "shadowTexture"), 0);
+
+			glBindVertexArray(mesh.vao);					
+			glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
+		}
 	}
-
-	// render the scene
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, viewport_size[2], viewport_size[3]);
-
-	glClearColor(0.f, 0.f, 0.25f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(shading_.program);
-
-	static const glm::mat4 projectionMatrix = glm::perspective(45.0f, aspect_ratio, 0.1f, 1000.f);
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "projectionMatrix"), 1, GL_FALSE, &projectionMatrix[0][0]); 
-
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightViewXform"), 1, GL_FALSE, &light.getView()[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shading_.program, "lightProjectionXform"), 1, GL_FALSE, &light.getProjection()[0][0]);
-
-	glUniform1f(glGetUniformLocation(shading_.program, "shadowMapSize"), static_cast<float>(m_shadow.shadowMapSize)); 
-
-	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
-	{
-		const TcfScene::Model model = scene_->model(modelIndex);
-		const Mesh mesh = meshes_[model.mesh_index];
-			
-		glUniformMatrix4fv(glGetUniformLocation(shading_.program, "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_shadow.texture);
-		glUniform1i(glGetUniformLocation(shading_.program, "shadowTexture"), 0);
-
-		glBindVertexArray(mesh.vao);					
-		glDrawElements(GL_TRIANGLES, mesh.element_count, GL_UNSIGNED_INT, 0);
-	}
-
 }

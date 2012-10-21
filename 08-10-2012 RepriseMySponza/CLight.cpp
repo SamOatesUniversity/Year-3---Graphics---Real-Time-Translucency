@@ -54,12 +54,22 @@ glm::mat4 CLight::getProjection()
 {
 	glm::mat4 projectionXform;
 	projectionXform = glm::perspective(
-		45.0f,
+		m_light.coneAngle,
 		1.0f,
 		0.1f,
 		250.0f
 		);
 
 	return projectionXform;
+}
+
+/*
+*	\brief 
+*/
+void CLight::setPosition( 
+		glm::vec3 &position 
+	)
+{
+	m_light.position = position;
 }
 
