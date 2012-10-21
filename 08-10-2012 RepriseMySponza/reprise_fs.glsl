@@ -69,7 +69,7 @@ vec3 Shadow(float bias, int level_of_filtering, int kernal )
         for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
 		{
             float light_to_first_hit_depth = texture(shadowTexture, shadow_texcoord + vec2( x / shadowMapSize, y / shadowMapSize )).x;
-            shadowing += ((light_to_first_hit_depth+bias) < light_to_point_depth) ? 0.0f : 1.0f;
+            shadowing += ((light_to_first_hit_depth+bias) < light_to_point_depth) ? 0.5f : 1.0f;
             count += 1.0f;
         }
 	}
@@ -77,12 +77,23 @@ vec3 Shadow(float bias, int level_of_filtering, int kernal )
 	return vec3( shadowing / count, shadowing / count, shadowing / count );
 }
 
+///////////////////////////////////////////////////
+//          Create a Directional light           //
+// direction should have values between -1 and 1 //
+///////////////////////////////////////////////////
+vec3 DirectionalLight(vec3 direction, vec3 colour, float intensity)
+{
+    return (colour * clamp(dot(normalize(direction), world_normal), 0.0f, 1.0f)) * intensity;
+}
+
 void main(void)
 {
 	vec3 colourOutput = vec3( 0.0f, 0.0f, 0.0f );
 
 	colourOutput += SpotLight(light.position, light.direction, light.coneAngle);
-	colourOutput *= Shadow(0.0000025f, 1, 1);
+	
+	colourOutput += DirectionalLight(vec3(-0.1, 0, 0), vec3(0.2f,0.2f,0.2f), 1.0f);
+	//colourOutput *= Shadow(0.0000025f, 3, 1);
 
     fragment_colour = vec4(colourOutput.x, colourOutput.y, colourOutput.z, 1.0);
 }
