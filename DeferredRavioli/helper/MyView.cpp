@@ -96,7 +96,10 @@ void MyView::windowViewDidStop(
 		std::shared_ptr<tyga::Window> window				//!< A pointer to the window object
 	)
 {
-
+	for (Mesh mesh : m_meshes)
+	{
+		mesh.Release();
+	}
 }
 
 /*

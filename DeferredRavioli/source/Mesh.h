@@ -34,4 +34,7 @@ public:
 												const int noofElements			//! The number of elements in the above array
 											);
 
+											//! Release the OpenGL buffers associated with this mesh
+	void									Release();
+
 };

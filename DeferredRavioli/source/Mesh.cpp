@@ -75,3 +75,13 @@ void Mesh::Create(
 	m_elementCount = noofElements;
 }
 
+/*
+*	\brief Release the OpenGL buffers associated with this mesh
+*/
+void Mesh::Release()
+{
+	glDeleteBuffers(1, &m_vertexVBO);
+	glDeleteBuffers(1, &m_elementVBO);
+	glDeleteVertexArrays(1, &m_vao);
+}
+
