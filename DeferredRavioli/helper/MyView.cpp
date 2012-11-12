@@ -45,6 +45,7 @@ void MyView::reloadShaders()
 	{
 		glAttachShader(ambiant->GetProgram(), ambiant->GetVertexShader());
 		glBindAttribLocation(ambiant->GetProgram(), 0, "vertex_position");
+		glBindAttribLocation(ambiant->GetProgram(), 1, "vertex_normal");
 
 		glAttachShader(ambiant->GetProgram(), ambiant->GetFragmentShader());
 		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
