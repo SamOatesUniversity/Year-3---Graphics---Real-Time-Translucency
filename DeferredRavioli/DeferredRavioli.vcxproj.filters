@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="framework\FileHelper.cpp">
+      <Filter>framework\source files</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\tgl.c">
+      <Filter>framework\source files</Filter>
+    </ClCompile>
+    <ClCompile Include="framework\Window.cpp">
+      <Filter>framework\source files</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\MyController.cpp">
+      <Filter>helper\source files</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\MyView.cpp">
+      <Filter>helper\source files</Filter>
+    </ClCompile>
+    <ClCompile Include="helper\TcfScene.cpp">
+      <Filter>helper\source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework\FileHelper.hpp">
+      <Filter>framework\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\tgl.h">
+      <Filter>framework\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\Window.hpp">
+      <Filter>framework\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\WindowControlDelegate.hpp">
+      <Filter>framework\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="framework\WindowViewDelegate.hpp">
+      <Filter>framework\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\MyController.hpp">
+      <Filter>helper\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\MyView.hpp">
+      <Filter>helper\header files</Filter>
+    </ClInclude>
+    <ClInclude Include="helper\TcfScene.hpp">
+      <Filter>helper\header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="framework">
+      <UniqueIdentifier>{6e3ac2b1-da02-49a5-91fc-4de64953a64b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\source files">
+      <UniqueIdentifier>{4e29c6ef-1fed-4bfb-8f85-0c6d536517c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework\header files">
+      <UniqueIdentifier>{9fbf06a9-0cbe-41e3-aa72-2c51e60f6cf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="helper">
+      <UniqueIdentifier>{a07ef843-bbfc-4040-832b-440c3f5fd362}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="helper\source files">
+      <UniqueIdentifier>{20a46f3d-a2d6-4a9d-86b3-ac206f0a2229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="helper\header files">
+      <UniqueIdentifier>{6ef3ddb1-f8c5-48cb-b2f7-9064277cbffd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
