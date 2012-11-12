@@ -12,7 +12,14 @@
 #include <vector>
 #include <memory>
 
-#define NOOF_GBUFFER_TEXTURES 2
+struct GBufferTexture {
+	enum {
+		position,
+		normal,
+		noof
+	};
+};
+
 
 class TcfScene;
 
@@ -22,7 +29,7 @@ private:
 
 	struct {
 		GLuint frameBuffer;
-		GLuint texture[NOOF_GBUFFER_TEXTURES];
+		GLuint texture[GBufferTexture::noof];
 		GLuint depth;
 	} m_gbuffer;
 

@@ -101,5 +101,11 @@
     <None Include="shaders\ambient_vs.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\gbuffer_fs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\gbuffer_vs.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

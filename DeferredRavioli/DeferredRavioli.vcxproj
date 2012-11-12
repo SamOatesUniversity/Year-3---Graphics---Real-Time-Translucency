@@ -124,6 +124,8 @@
   <ItemGroup>
     <None Include="shaders\ambient_fs.glsl" />
     <None Include="shaders\ambient_vs.glsl" />
+    <None Include="shaders\gbuffer_fs.glsl" />
+    <None Include="shaders\gbuffer_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

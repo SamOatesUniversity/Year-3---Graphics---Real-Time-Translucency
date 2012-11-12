@@ -92,11 +92,11 @@ void MyView::CreateGBuffer(
 	glGenFramebuffers(1, &m_gbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
 
-	glGenTextures(NOOF_GBUFFER_TEXTURES, m_gbuffer.texture);
+	glGenTextures(GBufferTexture::noof, m_gbuffer.texture);
 	glGenTextures(1, &m_gbuffer.depth);
 
 	// setup colour buffers
-	for (unsigned int textureIndex = 0; textureIndex < NOOF_GBUFFER_TEXTURES; ++textureIndex) {
+	for (unsigned int textureIndex = 0; textureIndex < GBufferTexture::noof; ++textureIndex) {
 		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
 		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
@@ -107,11 +107,16 @@ void MyView::CreateGBuffer(
     glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
 	
+	GLenum drawBufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2, drawBufs);
+
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "Failed to create GBuffer!" << std::endl;
 		return;
 	}
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 /*
@@ -193,6 +198,10 @@ void MyView::windowViewDidStop(
 		delete m_camera;
 		m_camera = nullptr;
 	}
+
+	for( std::map<char*, Shader*>::iterator shaderIt = m_shader.begin(); shaderIt != m_shader.end(); ++shaderIt)
+		delete (*shaderIt).second;
+	m_shader.clear();
 }
 
 /*
