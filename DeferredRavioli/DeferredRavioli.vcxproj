@@ -121,6 +121,10 @@
     <ClCompile Include="source\Mesh.cpp" />
     <ClCompile Include="source\Shader.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\ambient_fs.glsl" />
+    <None Include="shaders\ambient_vs.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

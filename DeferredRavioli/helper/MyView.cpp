@@ -34,11 +34,23 @@ void MyView::reloadShaders()
 	m_shader.clear();
 
 	Shader *ambiant = new Shader();
-	if (!ambiant->Load("", "")) {
+	m_shader["ambiant"] = ambiant;
+
+	if (!ambiant->Load("shaders/ambient_vs.glsl", "shaders/ambient_fs.glsl")) 
+	{
 		std::cout << "Failed to load the ambiant shader!" << std::endl;
 		system("PAUSE");
 	}
-	m_shader["ambiant"] = ambiant;
+	else
+	{
+		glAttachShader(ambiant->GetProgram(), ambiant->GetVertexShader());
+		glBindAttribLocation(ambiant->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(ambiant->GetProgram(), ambiant->GetFragmentShader());
+		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(ambiant->GetProgram());
+	}	
 }
 
 /*
@@ -134,8 +146,6 @@ void MyView::windowViewRender(
 	const auto clock_time = std::chrono::system_clock::now() - m_startTime;
     const auto clock_millisecs = std::chrono::duration_cast<std::chrono::milliseconds>(clock_time);
     const float time_seconds = clock_millisecs.count() * 0.001f;
-
-
 
 	//////////////////////////////////////////////////////////////////////////
 

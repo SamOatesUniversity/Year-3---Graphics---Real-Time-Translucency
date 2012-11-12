@@ -90,5 +90,16 @@
     <Filter Include="_helper\header files">
       <UniqueIdentifier>{6ef3ddb1-f8c5-48cb-b2f7-9064277cbffd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{ff312e04-1e2f-4a82-a396-16e2fd64ff3a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\ambient_fs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\ambient_vs.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
