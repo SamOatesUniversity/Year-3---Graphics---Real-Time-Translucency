@@ -15,14 +15,6 @@ class MyView : public tyga::WindowViewDelegate
 {
 private:
 
-    struct Vertex
-    {
-		glm::vec3 position;												//!< The position of the vertex
-		glm::vec3 normal;												//!< The normal of the vertex
-    };
-
-private:
-
 	std::chrono::system_clock::time_point		m_startTime;			//!< 
     std::vector<Mesh>							m_meshes;				//!<
     std::shared_ptr<TcfScene>					m_scene;				//!< 

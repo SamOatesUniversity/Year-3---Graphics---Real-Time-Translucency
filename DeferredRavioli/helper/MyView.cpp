@@ -43,6 +43,38 @@ void MyView::windowViewWillStart(
 	if (!m_scene->readFile("sponza.tcf")) {
 		std::cerr << "Failed to read sponza.tcf data file" << std::endl;
 	}
+
+	// Load the scene
+	const int noofMeshes = m_scene->meshCount();
+	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
+	{
+		const TcfScene::Mesh sceneMesh = m_scene->mesh(meshIndex);
+
+		// populate the vertex array
+		const int noofVerticies = sceneMesh.position_array.size();
+		Vertex *const vertices = new Vertex[noofVerticies];
+		for (int vertexIndex = 0; vertexIndex < noofVerticies; ++vertexIndex)
+		{
+			vertices[vertexIndex].position = sceneMesh.position_array[vertexIndex];
+			vertices[vertexIndex].normal = sceneMesh.normal_array[vertexIndex];
+		}
+
+		// populate elements (index) array
+		const unsigned int noofElements = sceneMesh.element_array.size();
+		unsigned int *const elements = new unsigned int[noofElements];
+		for (unsigned int elementIndex = 0; elementIndex < noofElements; ++elementIndex) 
+		{
+			elements[elementIndex] = sceneMesh.element_array[elementIndex];
+		}
+
+		// make our new mesh
+		Mesh mesh;		
+		mesh.Create(vertices, noofVerticies, elements, noofElements);
+		m_meshes.push_back(mesh);
+
+		delete[] vertices;
+		delete[] elements;
+	}
 }
 
 /*
