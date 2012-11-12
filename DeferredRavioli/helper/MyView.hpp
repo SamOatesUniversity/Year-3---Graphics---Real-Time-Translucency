@@ -3,9 +3,12 @@
 #include "WindowViewDelegate.hpp"
 #include "tgl.h"
 #include "../source/Mesh.h"
+#include "../source/Camera.h"
+#include "../source/Shader.h"
 
 #include <glm/glm.hpp>
 #include <chrono>
+#include <map>
 #include <vector>
 #include <memory>
 
@@ -18,6 +21,10 @@ private:
 	std::chrono::system_clock::time_point		m_startTime;			//!< 
     std::vector<Mesh>							m_meshes;				//!<
     std::shared_ptr<TcfScene>					m_scene;				//!< 
+
+	Camera										*m_camera;				//!< 
+
+	std::map<char*, Shader*>					m_shader;				//!< 
 
 private:
 												//! Called when the window starts

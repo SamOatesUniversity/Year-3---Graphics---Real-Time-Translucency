@@ -37,4 +37,7 @@ public:
 											//! Release the OpenGL buffers associated with this mesh
 	void									Release();
 
+											//! Draw the mesh
+	void									Draw() const;
+
 };

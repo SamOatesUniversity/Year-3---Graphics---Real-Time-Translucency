@@ -105,7 +105,9 @@
     <ClInclude Include="helper\MyController.hpp" />
     <ClInclude Include="helper\MyView.hpp" />
     <ClInclude Include="helper\TcfScene.hpp" />
+    <ClInclude Include="source\Camera.h" />
     <ClInclude Include="source\Mesh.h" />
+    <ClInclude Include="source\Shader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="framework\FileHelper.cpp" />
@@ -114,8 +116,10 @@
     <ClCompile Include="helper\MyController.cpp" />
     <ClCompile Include="helper\MyView.cpp" />
     <ClCompile Include="helper\TcfScene.cpp" />
+    <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Mesh.cpp" />
+    <ClCompile Include="source\Shader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

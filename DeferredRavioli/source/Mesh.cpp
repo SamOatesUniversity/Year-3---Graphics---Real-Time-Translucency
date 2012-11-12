@@ -85,3 +85,12 @@ void Mesh::Release()
 	glDeleteVertexArrays(1, &m_vao);
 }
 
+/*
+*	\brief Draw the mesh
+*/
+void Mesh::Draw() const
+{
+	glBindVertexArray(m_vao);					
+	glDrawElements(GL_TRIANGLES, m_elementCount, GL_UNSIGNED_INT, 0);
+}
+
