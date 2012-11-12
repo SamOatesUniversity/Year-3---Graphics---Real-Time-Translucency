@@ -66,18 +66,51 @@ void MyView::reloadShaders()
 	}
 	else
 	{
-		glAttachShader(ambiant->GetProgram(), ambiant->GetVertexShader());
-		glBindAttribLocation(ambiant->GetProgram(), 0, "vertex_position");
-		glBindAttribLocation(ambiant->GetProgram(), 1, "vertex_normal");
+		glAttachShader(gbuffer->GetProgram(), gbuffer->GetVertexShader());
+		glBindAttribLocation(gbuffer->GetProgram(), 0, "vertex_position");
+		glBindAttribLocation(gbuffer->GetProgram(), 1, "vertex_normal");
 
-		glAttachShader(ambiant->GetProgram(), ambiant->GetFragmentShader());
-		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
+		glAttachShader(gbuffer->GetProgram(), gbuffer->GetFragmentShader());
+		glBindFragDataLocation(gbuffer->GetProgram(), 0, "fragment_colour");
 
-		glLinkProgram(ambiant->GetProgram());
+		glLinkProgram(gbuffer->GetProgram());
 
 		std::cout << "Loaded gbuffer shader..." << std::endl;
 
 		m_shader["gbuffer"] = gbuffer;
+	}
+}
+
+/*
+*	\brief Create the GBuffer
+*/
+void MyView::CreateGBuffer(
+		int windowWidth,
+		int windowHeight
+	)
+{
+	glGenFramebuffers(1, &m_gbuffer.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
+
+	glGenTextures(NOOF_GBUFFER_TEXTURES, m_gbuffer.texture);
+	glGenTextures(1, &m_gbuffer.depth);
+
+	// setup colour buffers
+	for (unsigned int textureIndex = 0; textureIndex < NOOF_GBUFFER_TEXTURES; ++textureIndex) {
+		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
+	}
+
+	// setup depth
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
+    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
+	
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "Failed to create GBuffer!" << std::endl;
+		return;
 	}
 }
 
@@ -141,6 +174,8 @@ void MyView::windowViewDidReset(
 	)
 {
     glViewport(0, 0, width, height);
+
+	CreateGBuffer(width, height);
 }
 
 /*
@@ -177,7 +212,39 @@ void MyView::windowViewRender(
 
 	//////////////////////////////////////////////////////////////////////////
 
+	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 1, ~0);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glDepthMask(GL_TRUE);
+
+	glDisable(GL_BLEND);
+
+	glUseProgram(m_shader["gbuffer"]->GetProgram());
+
+	glUniformMatrix4fv(glGetUniformLocation(m_shader["gbuffer"]->GetProgram(), "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(m_shader["gbuffer"]->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &m_camera->GetProjectionMatrix(aspect_ratio)[0][0]); 
+
+	const int noofModels = m_scene->modelCount();
+	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	{
+		const TcfScene::Model model = m_scene->model(modelIndex);
+		const Mesh mesh = m_meshes[model.mesh_index];
+
+		glUniformMatrix4fv(glGetUniformLocation(m_shader["gbuffer"]->GetProgram(), "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+		mesh.Draw();		
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+
 	glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+
+	/*glBindFramebuffer(GL_FRAMEBUFFER, NULL);
 	glViewport(0, 0, viewport_size[2], viewport_size[3]);
 	glClearColor(0.0f, 0.f, 0.25f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -200,5 +267,5 @@ void MyView::windowViewRender(
 
 		glUniformMatrix4fv(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
 		mesh.Draw();		
-	}
+	}*/
 }

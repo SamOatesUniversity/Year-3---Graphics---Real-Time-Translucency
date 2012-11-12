@@ -12,10 +12,20 @@
 #include <vector>
 #include <memory>
 
+#define NOOF_GBUFFER_TEXTURES 2
+
 class TcfScene;
 
 class MyView : public tyga::WindowViewDelegate
 {
+private:
+
+	struct {
+		GLuint frameBuffer;
+		GLuint texture[NOOF_GBUFFER_TEXTURES];
+		GLuint depth;
+	} m_gbuffer;
+
 private:
 
 	std::chrono::system_clock::time_point		m_startTime;			//!< 
@@ -47,6 +57,12 @@ private:
 												//! Called when the scene should render
 	void										windowViewRender(
 													std::shared_ptr<tyga::Window> window			//!< A pointer to the window object
+												);
+
+												//! Create the GBuffer
+	void										CreateGBuffer(
+													int windowWidth,
+													int windowHeight
 												);
 
 public:
