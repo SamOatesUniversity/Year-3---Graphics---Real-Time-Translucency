@@ -82,7 +82,15 @@ void MyController::windowControlKeyboardChanged(
 		bool down														//!< If it is a key down event or not
 	)
 {
-   
+	if (!down)
+		return; 
+
+   switch (keyIndex) {
+		case tyga::kWindowKeyF5:
+		{
+			m_view->reloadShaders();
+		}
+   }
 }
 
 /*

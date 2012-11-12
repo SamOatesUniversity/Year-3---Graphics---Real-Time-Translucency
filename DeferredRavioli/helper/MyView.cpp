@@ -33,9 +33,8 @@ void MyView::reloadShaders()
 	}
 	m_shader.clear();
 
-	Shader *ambiant = new Shader();
-	m_shader["ambiant"] = ambiant;
-
+	// Create an ambient shader
+	Shader *const ambiant = new Shader();
 	if (!ambiant->Load("shaders/ambient_vs.glsl", "shaders/ambient_fs.glsl")) 
 	{
 		std::cout << "Failed to load the ambiant shader!" << std::endl;
@@ -51,7 +50,35 @@ void MyView::reloadShaders()
 		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
 
 		glLinkProgram(ambiant->GetProgram());
+
+		std::cout << "Loaded ambient shader..." << std::endl;
+
+		m_shader["ambiant"] = ambiant;
 	}	
+
+
+	// Create the shader which will output the world position and normal to the gbuffer
+	Shader *const gbuffer = new Shader();
+	if (!gbuffer->Load("shaders/gbuffer_vs.glsl", "shaders/gbuffer_fs.glsl"))
+	{
+		std::cout << "Failed to load the gbuffer shader!" << std::endl;
+		system("PAUSE");
+	}
+	else
+	{
+		glAttachShader(ambiant->GetProgram(), ambiant->GetVertexShader());
+		glBindAttribLocation(ambiant->GetProgram(), 0, "vertex_position");
+		glBindAttribLocation(ambiant->GetProgram(), 1, "vertex_normal");
+
+		glAttachShader(ambiant->GetProgram(), ambiant->GetFragmentShader());
+		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(ambiant->GetProgram());
+
+		std::cout << "Loaded gbuffer shader..." << std::endl;
+
+		m_shader["gbuffer"] = gbuffer;
+	}
 }
 
 /*
