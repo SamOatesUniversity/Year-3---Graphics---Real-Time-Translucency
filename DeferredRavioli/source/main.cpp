@@ -4,7 +4,13 @@
 #include "Window.hpp"
 #include "../helper/MyController.hpp"
 
-int main(int argc, char *argv[])
+/*
+*	\brief The main entry point of the application
+*/
+int main(
+		int argc,						//!< Number of arguments passed in at startup 
+		char *argv[]					//!< The arguments passed
+	)
 {
     // enable debug memory checks
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -13,11 +19,12 @@ int main(int argc, char *argv[])
     std::shared_ptr<tyga::Window> window = tyga::Window::mainWindow();
     window->setController(controller);
 
-    const int window_width = 1024;
-    const int window_height = 576;
-    const int number_of_samples = 4;
+    const int windowWidth = 1024;
+    const int windowHeight = 576;
+    const int noofSamples = 4;
 
-    if (window->open(window_width, window_height, number_of_samples, true)) {
+    if (window->open(windowWidth, windowHeight, noofSamples, true)) 
+	{
         while (window->isVisible()) {
             window->update();
         }

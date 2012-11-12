@@ -2,6 +2,7 @@
 
 #include "WindowViewDelegate.hpp"
 #include "tgl.h"
+#include "../source/Mesh.h"
 
 #include <glm/glm.hpp>
 #include <chrono>
@@ -12,76 +13,51 @@ class TcfScene;
 
 class MyView : public tyga::WindowViewDelegate
 {
-public:
-	
-    MyView();
-	
-    ~MyView();
-
-    void
-    reloadShaders();
-
 private:
-
-    void
-    windowViewWillStart(std::shared_ptr<tyga::Window> window);
-	
-    void
-    windowViewDidReset(std::shared_ptr<tyga::Window> window,
-                       int width,
-                       int height);
-
-    void
-    windowViewDidStop(std::shared_ptr<tyga::Window> window);
-    
-    void
-    windowViewRender(std::shared_ptr<tyga::Window> window);
-
-private:
-
-    std::chrono::system_clock::time_point start_time_;
-
-    struct ShaderProgram
-    {
-        GLuint vertex_shader;
-        GLuint fragment_shader;
-        GLuint program;
-
-        ShaderProgram() : vertex_shader(0),
-                          fragment_shader(0),
-                          program(0) {}
-    };
-    ShaderProgram shading_;
 
     struct Vertex
     {
-		glm::vec3 position;
-		glm::vec3 normal;
+		glm::vec3 position;												//!< The position of the vertex
+		glm::vec3 normal;												//!< The normal of the vertex
     };
 
-    struct Mesh
-    {
-        GLuint vertex_vbo;
-        GLuint element_vbo;
-        GLuint vao;
-        int element_count;
+private:
 
-        Mesh() : vertex_vbo(0),
-                 element_vbo(0),
-                 vao(0),
-                 element_count(0) {}
-    };
+	std::chrono::system_clock::time_point		m_startTime;			//!< 
+    std::vector<Mesh>							m_meshes;				//!<
+    std::shared_ptr<TcfScene>					m_scene;				//!< 
 
-    std::vector<Mesh> meshes_;
+private:
+												//! Called when the window starts
+	void										windowViewWillStart(
+													std::shared_ptr<tyga::Window> window			//!< A pointer to the window object
+												);
 
-    std::shared_ptr<TcfScene> scene_;
+												//! Called when the window has reset (normally caused by a resize) 
+	void										windowViewDidReset(
+													std::shared_ptr<tyga::Window> window,			//!< A pointer to the window object
+													int width,										//!< The new width of the window
+													int height										//!< The new height of the window
+												);
 
-	struct {
-		GLuint						texture;					//!< The GL Id of our shadow texture
-		GLuint						frameBuffer;				//!< The open GL frame buffer used for the depth texture
-		ShaderProgram				shader;						//!< The shading program to use with shadow rendering
-		int							shadowMapSize;				//!< THe size of the shadow map texture
-	} m_shadow;
+												//! Called when the window is shutting down
+	void										windowViewDidStop(
+													std::shared_ptr<tyga::Window> window			//!< A pointer to the window object
+												);
 
-	ShaderProgram					m_ambient;					//!< The ambient shader
+												//! Called when the scene should render
+	void										windowViewRender(
+													std::shared_ptr<tyga::Window> window			//!< A pointer to the window object
+												);
+
+public:
+
+												//! Class constructor
+												MyView();
+
+												//! Class destructor
+												~MyView();
+
+												//! Reload the programs shaders
+	void										reloadShaders();
 };

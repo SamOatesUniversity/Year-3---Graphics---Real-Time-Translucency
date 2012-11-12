@@ -6,55 +6,70 @@ class MyView;
 
 class MyController : public tyga::WindowControlDelegate
 {
-public:
+private:
+
+	std::shared_ptr<MyView>					m_view;														//!< A pointer to the view object
+
+private:
+											//! Called when the window has been created
+    void									windowControlWillStart(
+												std::shared_ptr<tyga::Window> window					//!< A Pointer to the window object
+											);
+
+											//! Called when the window is shutting down
+    void									windowControlDidStop(
+												std::shared_ptr<tyga::Window> window					//!< A Pointer to the window object
+											);
+
+											//! Called when the mouse input is moved
+    void									windowControlMouseMoved(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int x,													//!< The new x coord of the mouse
+												int y													//!< The new y coord of the mouse
+											);	
+
+											//! Called when a mouse button state is changed
+    void									windowControlMouseButtonChanged(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int buttonIndex,										//!< The index of the button that was pressed
+												bool down												//!< If it is a button down event or not
+											);
 	
-    MyController();
+											//! Called when the mouse scroll wheel is changed
+    void									windowControlMouseWheelMoved(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int position											//!< The new position of the scroll wheel
+											);
 
-    ~MyController();
+											//! Called when a key state changes on the keyboard
+    void									windowControlKeyboardChanged(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int keyIndex,											//!< The index of the key that was pressed
+												bool down												//!< If it is a key down event or not
+											);
 
-private:
+											//! Called when a thumbstick is moved on a controller
+    void									windowControlGamepadAxisMoved(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int gamepadIndex,										//!< The index of the controller (supports multiple contorllers)
+												int axisIndex,											//!< Which axis the event represents
+												float pos												//!< The new position value
+											);
 
-    void
-    windowControlWillStart(std::shared_ptr<tyga::Window> window);
+											//! Called when a button state changes on a controller
+	void									windowControlGamepadButtonChanged(
+												std::shared_ptr<tyga::Window> window,					//!< A Pointer to the window object
+												int gamepadIndex,										//!< The index of the controller (supports multiple contorllers)
+												int buttonIndex,										//!< The index of the button pressed
+												bool down												//!< If it is a key down event or not
+											);
 
-    void
-    windowControlDidStop(std::shared_ptr<tyga::Window> window);
+public:
 
-    void
-    windowControlMouseMoved(std::shared_ptr<tyga::Window> window,
-                            int x,
-                            int y);	
+											//! Class constructor
+											MyController();
 
-    void
-    windowControlMouseButtonChanged(std::shared_ptr<tyga::Window> window,
-                                    int button_index,
-                                    bool down);
-
-
-    void
-    windowControlMouseWheelMoved(std::shared_ptr<tyga::Window> window,
-                                 int position);
-
-    void
-    windowControlKeyboardChanged(std::shared_ptr<tyga::Window> window,
-                                 int key_index,
-                                 bool down);
-
-    void
-    windowControlGamepadAxisMoved(std::shared_ptr<tyga::Window> window,
-                                  int gamepad_index,
-                                  int axis_index,
-                                  float pos);
-
-    void
-    windowControlGamepadButtonChanged(std::shared_ptr<tyga::Window> window,
-                                      int gamepad_index,
-                                      int button_index,
-                                      bool down);
-
-private:
-	std::shared_ptr<MyView> view_;
-
-	glm::vec2				m_lastMouse;
+											//! Class destructor
+											~MyController();
 
 };

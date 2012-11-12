@@ -20,6 +20,9 @@
     <ClCompile Include="helper\TcfScene.cpp">
       <Filter>helper\source files</Filter>
     </ClCompile>
+    <ClCompile Include="source\Mesh.cpp">
+      <Filter>header files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework\FileHelper.hpp">
@@ -46,6 +49,9 @@
     <ClInclude Include="helper\TcfScene.hpp">
       <Filter>helper\header files</Filter>
     </ClInclude>
+    <ClInclude Include="source\Mesh.h">
+      <Filter>header files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="framework">
@@ -65,6 +71,12 @@
     </Filter>
     <Filter Include="helper\header files">
       <UniqueIdentifier>{6ef3ddb1-f8c5-48cb-b2f7-9064277cbffd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source files">
+      <UniqueIdentifier>{3d97c260-ebbc-4023-b805-b6f4cbe88e22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header files">
+      <UniqueIdentifier>{f6bd6d15-eec8-4745-88a8-fc6dc7280e06}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
