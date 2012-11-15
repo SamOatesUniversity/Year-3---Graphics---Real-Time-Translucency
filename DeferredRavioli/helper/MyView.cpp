@@ -251,6 +251,8 @@ void MyView::windowViewRender(
 		std::shared_ptr<tyga::Window> window				//!< A pointer to the window object
 	)
 {
+	m_camera->Update();
+
 	GLint viewport_size[4];
     glGetIntegerv(GL_VIEWPORT, viewport_size);
     const float aspect_ratio = viewport_size[2] / (float)viewport_size[3];

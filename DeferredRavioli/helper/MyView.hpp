@@ -91,4 +91,10 @@ public:
 
 												//! Reload the programs shaders
 	void										reloadShaders();
+
+												//! 
+	Camera										*getCamera() const 
+												{
+													return m_camera;
+												}
 };

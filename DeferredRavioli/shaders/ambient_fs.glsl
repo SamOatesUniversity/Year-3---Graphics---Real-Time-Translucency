@@ -14,5 +14,5 @@ void main(void)
 {
 	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
-    reflected_light = DirectionalLight(worldNormal, vec3(0.5f, 0.5f, -0.5f), vec3(1, 1, 1), 1.0f);
+    reflected_light = DirectionalLight(worldNormal, vec3(0.0f, 1.0f, 0.5f), vec3(1, 1, 1), 1.0f);
 }

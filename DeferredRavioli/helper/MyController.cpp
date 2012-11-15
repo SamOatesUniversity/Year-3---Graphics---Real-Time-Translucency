@@ -82,13 +82,35 @@ void MyController::windowControlKeyboardChanged(
 		bool down														//!< If it is a key down event or not
 	)
 {
-	if (!down)
-		return; 
-
    switch (keyIndex) {
 		case tyga::kWindowKeyF5:
 		{
 			m_view->reloadShaders();
+			break;
+		}
+
+		case 'W':
+		{
+			m_view->getCamera()->isForwardKey = down;
+			break;
+		}
+
+		case 'A':
+		{
+			m_view->getCamera()->isLeftKey = down;
+			break;
+		}
+
+		case 'S':
+		{
+			m_view->getCamera()->isBackKey = down;
+			break;
+		}
+
+		case 'D':
+		{
+			m_view->getCamera()->isRightKey = down;
+			break;
 		}
    }
 }
