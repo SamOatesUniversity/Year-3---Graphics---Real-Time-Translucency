@@ -40,4 +40,16 @@ public:
 											//! Draw the mesh
 	void									Draw() const;
 
+											//! Get the meshes vertex vbo
+	GLuint									&getVertexVBO()
+											{
+												return m_vertexVBO;
+											}
+
+											//! Get the meshes vao
+	GLuint									&getVAO()
+											{
+												return m_vao;
+											}
+
 };

@@ -44,7 +44,6 @@ void MyView::reloadShaders()
 	{
 		glAttachShader(ambiant->GetProgram(), ambiant->GetVertexShader());
 		glBindAttribLocation(ambiant->GetProgram(), 0, "vertex_position");
-		glBindAttribLocation(ambiant->GetProgram(), 1, "vertex_normal");
 
 		glAttachShader(ambiant->GetProgram(), ambiant->GetFragmentShader());
 		glBindFragDataLocation(ambiant->GetProgram(), 0, "fragment_colour");
@@ -134,6 +133,31 @@ void MyView::windowViewWillStart(
 		std::cerr << "Failed to read sponza.tcf data file" << std::endl;
 	}
 
+	{
+		std::vector<glm::vec2> vertices(4);
+		vertices[0] = glm::vec2(-1, -1);
+		vertices[1] = glm::vec2(1, -1);
+		vertices[2] = glm::vec2(1, 1);
+		vertices[3] = glm::vec2(-1, 1);
+
+		glGenBuffers(1, &m_meshQuad.getVertexVBO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_meshQuad.getVertexVBO());
+		glBufferData(GL_ARRAY_BUFFER,
+			vertices.size() * sizeof(glm::vec2),
+			vertices.data(),
+			GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glGenVertexArrays(1, &m_meshQuad.getVAO());
+		glBindVertexArray(m_meshQuad.getVAO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_meshQuad.getVertexVBO());
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+			sizeof(glm::vec2), 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+
 	// Load the scene
 	const int noofMeshes = m_scene->meshCount();
 	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
@@ -181,6 +205,22 @@ void MyView::windowViewDidReset(
     glViewport(0, 0, width, height);
 
 	CreateGBuffer(width, height);
+
+	// create light buffer
+	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
+	glGenRenderbuffers(1, &m_lbuffer.colorBuffer);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+
+	const GLenum framebuffer_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (framebuffer_status != GL_FRAMEBUFFER_COMPLETE) {
+		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
+	}
+
 }
 
 /*
@@ -251,30 +291,36 @@ void MyView::windowViewRender(
 
 	//////////////////////////////////////////////////////////////////////////
 
-	glBindFramebuffer(GL_FRAMEBUFFER, NULL);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 
-	/*glBindFramebuffer(GL_FRAMEBUFFER, NULL);
-	glViewport(0, 0, viewport_size[2], viewport_size[3]);
-	glClearColor(0.0f, 0.f, 0.25f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-	glDepthFunc(GL_LEQUAL);
-	glDisable(GL_BLEND);
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
 	glUseProgram(m_shader["ambiant"]->GetProgram());
 
-	glUniformMatrix4fv(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "viewMatrix"), 1, GL_FALSE, &m_camera->GetViewMatrix()[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &m_camera->GetProjectionMatrix(aspect_ratio)[0][0]); 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_position"), 0);
 
-	const int noofModels = m_scene->modelCount();
-	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
-	{
-		const TcfScene::Model model = m_scene->model(modelIndex);
-		const Mesh mesh = m_meshes[model.mesh_index];
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_normal"), 1);
 
-		glUniformMatrix4fv(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
-		mesh.Draw();		
-	}*/
+	glBindVertexArray(m_meshQuad.getVAO());
+	glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
+
+	glDisable(GL_STENCIL_TEST);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+	glBlitFramebuffer(
+		0, 0, viewport_size[2], viewport_size[3],
+		0, 0, viewport_size[2], viewport_size[3],
+		GL_COLOR_BUFFER_BIT, GL_NEAREST
+	);
 }

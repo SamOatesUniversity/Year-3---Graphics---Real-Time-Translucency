@@ -1,17 +1,18 @@
 #version 330
 
-in vec3 world_position;
-in vec3 world_normal;
+uniform sampler2DRect sampler_world_position;
+uniform sampler2DRect sampler_world_normal;
 
-out vec4 fragment_colour;
+out vec3 reflected_light;
 
-vec3 DirectionalLight(vec3 direction, vec3 colour, float intensity)
+vec3 DirectionalLight(vec3 worldNormal, vec3 direction, vec3 colour, float intensity)
 {
-    return (colour * clamp(dot(direction, world_normal), 0.0f, 1.0f)) * intensity;
+    return colour * (clamp(dot(direction, worldNormal), 0.0, 1.0) * intensity);
 }
 
 void main(void)
 {
-	vec3 light = DirectionalLight(vec3(1.0f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 1.0f), 1.0f);
-    fragment_colour = vec4(light, 1.0f);
+	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
+    reflected_light = DirectionalLight(worldNormal, vec3(0.5f, 0.5f, -0.5f), vec3(1, 1, 1), 1.0f);
 }

@@ -58,7 +58,7 @@ const bool Shader::Load(
             NULL,
             log
 		);
-        std::cerr << log << std::endl;
+        std::cerr << "Vertex Shader: " << log << std::endl;
 		return false;
     }
  
@@ -91,7 +91,7 @@ const bool Shader::Load(
             log
 		);
 
-        std::cerr << log << std::endl;
+        std::cerr << "Fragment Shader: " << log << std::endl;
 		return false;
     }
 

@@ -33,6 +33,13 @@ private:
 		GLuint depth;
 	} m_gbuffer;
 
+
+	struct {
+		GLuint frameBuffer;
+		GLuint colorBuffer;
+		GLuint depth;
+	} m_lbuffer;
+
 private:
 
 	std::chrono::system_clock::time_point		m_startTime;			//!< 
@@ -42,6 +49,8 @@ private:
 	Camera										*m_camera;				//!< 
 
 	std::map<char*, Shader*>					m_shader;				//!< 
+
+	Mesh										m_meshQuad;				//!< 
 
 private:
 												//! Called when the window starts
