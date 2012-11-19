@@ -38,9 +38,9 @@ void MyController::
 windowControlViewWillRender(std::shared_ptr<tyga::Window> window)
 {
     scene_->update();
-    if (camera_turn_mode_) {
+    //if (camera_turn_mode_) {
         scene_->setCameraRotationSpeed(0, 0);
-    }
+    //}
 }
 
 void MyController::

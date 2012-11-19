@@ -57,6 +57,28 @@ void MyView::reloadShaders()
 		m_shader["ambiant"] = ambiant;
 	}	
 
+	// Create an ambient shader
+	Shader *const pointlight = new Shader();
+	if (!pointlight->Load("shaders/pointlight_vs.glsl", "shaders/pointlight_fs.glsl")) 
+	{
+		std::cout << "Failed to load the pointlight shader!" << std::endl;
+		system("PAUSE");
+	}
+	else
+	{
+		glAttachShader(pointlight->GetProgram(), pointlight->GetVertexShader());
+		glBindAttribLocation(pointlight->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(pointlight->GetProgram(), pointlight->GetFragmentShader());
+		glBindFragDataLocation(pointlight->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(pointlight->GetProgram());
+
+		std::cout << "Loaded pointlight shader..." << std::endl;
+
+		m_shader["pointlight"] = pointlight;
+	}
+
 
 	// Create the shader which will output the world position and normal to the gbuffer
 	Shader *const gbuffer = new Shader();
@@ -120,7 +142,6 @@ void MyView::CreateGBuffer(
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindRenderbuffer(GL_RENDERBUFFER,0);
 }
 
 void MyView::
@@ -210,8 +231,9 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, width, height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
 
-	const GLenum framebuffer_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (framebuffer_status != GL_FRAMEBUFFER_COMPLETE) {
+	m_lbuffer.depth = m_gbuffer.depth;
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
 	}
 
@@ -222,7 +244,22 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 void MyView::
 windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
+	// free all meshes
+	for (Mesh mesh : m_meshes)
+		mesh.Release();
 
+	// free all shaders
+	 for( std::map<char*, Shader*>::iterator shaderIt = m_shader.begin(); shaderIt != m_shader.end(); ++shaderIt)
+        delete (*shaderIt).second;
+    m_shader.clear();
+
+	glDeleteTextures(GBufferTexture::noof, m_gbuffer.texture);
+	glDeleteTextures(1, &m_gbuffer.depth);
+
+	glDeleteRenderbuffers(1, &m_lbuffer.colorBuffer);
+
+	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
+	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
 }
 
 void MyView::
@@ -248,6 +285,8 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
         scene_->upDirection()
 	);
 
+	//////////////////////////////////////////////////////////////////////////
+	// POPULATE THE GBUFFER													//
 	//////////////////////////////////////////////////////////////////////////
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
@@ -275,41 +314,70 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		mesh.Draw();		
 	}
 
-	glEnable(GL_BLEND);
-
+	//////////////////////////////////////////////////////////////////////////
+	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA							//
 	//////////////////////////////////////////////////////////////////////////
 
-	//glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 
-	//glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	//glEnable(GL_STENCIL_TEST);
-	//glStencilFunc(GL_NOTEQUAL, 0, ~0);
-	//glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-	//glUseProgram(m_shader["ambiant"]->GetProgram());
+	// Directional Light 
+	glUseProgram(m_shader["ambiant"]->GetProgram());
 
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
-	//glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_position"), 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_position"), 0);
 
-	//glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
-	//glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_normal"), 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glUniform1i(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "sampler_world_normal"), 1);
 
-	//glBindVertexArray(m_meshQuad.getVAO());
-	//glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
+	glUniform3fv(glGetUniformLocation(m_shader["ambiant"]->GetProgram(), "directional_light_direction"), 1, glm::value_ptr(scene_->globalLightDirection()));
 
-	//glDisable(GL_STENCIL_TEST);
+	glBindVertexArray(m_meshQuad.getVAO());
+	glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
 
-	//glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);
-	//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	// point lights
+	glUseProgram(m_shader["pointlight"]->GetProgram());
 
-	//glBlitFramebuffer(
-	//	0, 0, viewport_size[2], viewport_size[3],
-	//	0, 0, viewport_size[2], viewport_size[3],
-	//	GL_COLOR_BUFFER_BIT, GL_NEAREST
-	//);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE); 
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glUniform1i(glGetUniformLocation(m_shader["pointlight"]->GetProgram(), "sampler_world_position"), 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glUniform1i(glGetUniformLocation(m_shader["pointlight"]->GetProgram(), "sampler_world_normal"), 1);
+		
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		MyScene::Light light = scene_->light(lightIndex);
+
+		glUniform1f(glGetUniformLocation(m_shader["pointlight"]->GetProgram(), "pointlight_range"), light.range);				
+		glUniform3fv(glGetUniformLocation(m_shader["pointlight"]->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+
+		glBindVertexArray(m_meshQuad.getVAO());
+		glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
+	}
+
+	glDisable(GL_STENCIL_TEST);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+	glBlitFramebuffer(
+		0, 0, viewport_size[2], viewport_size[3],
+		0, 0, viewport_size[2], viewport_size[3],
+		GL_COLOR_BUFFER_BIT, GL_NEAREST
+	);	
 
 }

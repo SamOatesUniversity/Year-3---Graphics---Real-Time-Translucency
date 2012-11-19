@@ -97,5 +97,11 @@
     <None Include="shaders\gbuffer_vs.glsl">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="shaders\pointlight_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\pointlight_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
