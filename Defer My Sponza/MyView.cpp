@@ -119,7 +119,8 @@ void MyView::CreateGBuffer(
 		return;
 	}
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER,0);
 }
 
 void MyView::
@@ -252,10 +253,6 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS, 1, ~0);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); 
 	glDepthMask(GL_TRUE);
@@ -273,9 +270,12 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		const MyScene::Model model = scene_->model(modelIndex);
 		const Mesh mesh = m_meshes[model.mesh_index];
 
-		glUniformMatrix4fv(glGetUniformLocation(m_shader["gbuffer"]->GetProgram(), "worldMatrix"), 1, GL_FALSE, &model.xform[0][0]);
+		glm::mat4 xform = glm::mat4(model.xform);
+		glUniformMatrix4fv(glGetUniformLocation(m_shader["gbuffer"]->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
 		mesh.Draw();		
 	}
+
+	glEnable(GL_BLEND);
 
 	//////////////////////////////////////////////////////////////////////////
 

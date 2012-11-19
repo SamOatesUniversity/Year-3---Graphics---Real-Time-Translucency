@@ -19,5 +19,5 @@ void main(void)
 	gl_Position = projectionMatrix * gl_Position;
 
 	world_position =  (worldMatrix * vec4(vertex_position, 1.0)).xyz;
-	world_normal = (worldMatrix * vec4(normalize( vertex_normal ), 0.0f)).xyz;
+	world_normal = (worldMatrix * vec4(normalize(vertex_normal), 0.0f)).xyz;
 }
