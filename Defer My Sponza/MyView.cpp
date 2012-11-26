@@ -161,20 +161,18 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 		glGenBuffers(1, &m_meshQuad.getVertexVBO());
 		glBindBuffer(GL_ARRAY_BUFFER, m_meshQuad.getVertexVBO());
-		glBufferData(GL_ARRAY_BUFFER,
-			vertices.size() * sizeof(glm::vec2),
-			vertices.data(),
-			GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec2), vertices.data(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		glGenVertexArrays(1, &m_meshQuad.getVAO());
 		glBindVertexArray(m_meshQuad.getVAO());
 		glBindBuffer(GL_ARRAY_BUFFER, m_meshQuad.getVertexVBO());
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-			sizeof(glm::vec2), 0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
+
+		m_meshQuad.Create(vertices.size(), 2);
 	}
 
 	// Load the scene
@@ -352,37 +350,41 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	glUniform3fv(glGetUniformLocation(ambiant->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));
 
 	glBindVertexArray(m_meshQuad.getVAO());
-	glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
 	glBindVertexArray(0);
 
-	//TODO: Pointlight materials
-
 	// point lights
-	//Shader *const pointlight = m_shader["pointlight"];
-	//glUseProgram(pointlight->GetProgram());
+	Shader *const pointlight = m_shader["pointlight"];
+	glUseProgram(pointlight->GetProgram());
 
-	//glEnable(GL_BLEND);
-	//glBlendEquation(GL_FUNC_ADD);
-	//glBlendFunc(GL_ONE, GL_ONE); 
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE); 
 
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
-	//glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_position"), 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_position"), 0);
 
-	//glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
-	//glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_normal"), 1);
-	//	
-	//for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
-	//{
-	//	MyScene::Light light = scene_->light(lightIndex);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_normal"), 1);
 
-	//	glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
-	//	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
+	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_material_info"), 2);
 
-	//	glBindVertexArray(m_meshQuad.getVAO());
-	//	glDrawArrays(GL_TRIANGLE_FAN, 0, GL_MAX_ELEMENTS_VERTICES);
-	//}
+	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
+
+	glBindVertexArray(m_meshQuad.getVAO());
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		MyScene::Light light = scene_->light(lightIndex);
+
+		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
+		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+
+		glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+	}
 
 	glDisable(GL_STENCIL_TEST);
 

@@ -29,6 +29,12 @@ public:
 											//! Class destructor
 											~Mesh();
 
+											//! Initialize vertex and element counts, if the mesh is externally initialized
+	void									Create(
+												const int noofVerticies,		//! The number of verticies in the vertex array
+												const int noofElements			//! The number of elements in the element array
+											);
+
 											//! Create the mesh
 	void									Create(
 												Vertex *vertices,				//! A pointer to an array of verticies

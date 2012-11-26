@@ -5,6 +5,7 @@
 */
 Mesh::Mesh() :
 		m_elementCount(0),
+		m_vertexCount(0),
 		m_elementVBO(NULL),
 		m_vertexVBO(NULL),
 		m_vao(NULL)
@@ -19,6 +20,19 @@ Mesh::~Mesh()
 {
 
 }
+
+/*
+*	\brief Initialize vertex and element counts, if the mesh is externally initialized
+*/
+void Mesh::Create( 
+		const int noofVerticies,						//!< The number of verticies in the vertex array
+		const int noofElements							//!< The number of elements in the above array
+	)
+{
+	m_vertexCount = noofVerticies;
+	m_elementCount = noofElements;
+}
+
 
 /*
 *	\brief Create the mesh
