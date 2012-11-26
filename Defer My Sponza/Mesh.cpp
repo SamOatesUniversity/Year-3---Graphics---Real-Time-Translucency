@@ -41,6 +41,7 @@ void Mesh::Create(
 		vertices,
 		GL_STATIC_DRAW
 		);
+	m_vertexCount = noofVerticies;
 
 	// positon
 	glEnableVertexAttribArray(0);
@@ -63,28 +64,6 @@ void Mesh::Create(
 		sizeof(Vertex), 
 		TGL_BUFFER_OFFSET(3 * sizeof(float))
 		);
-
-	//// tangent
-	//glEnableVertexAttribArray(1);
-	//glVertexAttribPointer(
-	//	2, 
-	//	3, 
-	//	GL_FLOAT, 
-	//	GL_FALSE,
-	//	sizeof(Vertex), 
-	//	TGL_BUFFER_OFFSET(6 * sizeof(float))
-	//	);
-
-	//// texcoords
-	//glEnableVertexAttribArray(1);
-	//glVertexAttribPointer(
-	//	3, 
-	//	2, 
-	//	GL_FLOAT, 
-	//	GL_FALSE,
-	//	sizeof(Vertex), 
-	//	TGL_BUFFER_OFFSET(9 * sizeof(float))
-	//	);
 
 	// elements
 	glGenBuffers(1, &m_elementVBO);

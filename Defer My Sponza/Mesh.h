@@ -20,6 +20,7 @@ private:
 	GLuint									m_vao;								//!< 
 
 	int										m_elementCount;						//!< 
+	int										m_vertexCount;						//!< 
 
 public:
 											//! Class constructor
@@ -41,6 +42,18 @@ public:
 
 											//! Draw the mesh
 	void									Draw() const;
+
+											//! Get the number of vertices in the mesh
+	const int								&GetNoofVertices()
+											{
+												return m_vertexCount;
+											}
+
+											//! Get the number of elements in the mesh
+	const int								&GetNoofElements()
+											{
+												return m_elementCount;
+											}
 
 											//! Get the meshes vertex vbo
 	GLuint									&getVertexVBO()

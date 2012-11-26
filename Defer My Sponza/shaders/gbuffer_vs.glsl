@@ -4,13 +4,15 @@ uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;  
 uniform mat4 worldMatrix;  
 
+uniform vec3 materialColor;
+uniform float materialShininess; 
+
 in vec3 vertex_position;
 in vec3 vertex_normal;
-in vec3 vertex_tangent;
-in vec3 vertex_texcoords;
 
 out vec3 world_position;
 out vec3 world_normal;
+out vec4 material_info;
 
 void main(void)
 {
@@ -20,4 +22,5 @@ void main(void)
 
 	world_position =  (worldMatrix * vec4(vertex_position, 1.0)).xyz;
 	world_normal = (worldMatrix * vec4(normalize(vertex_normal), 0.0f)).xyz;
+	material_info = vec4(materialColor, materialShininess);
 }

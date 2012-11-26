@@ -16,6 +16,7 @@ struct GBufferTexture {
 	enum {
 		position,
 		normal,
+		material,
 		noof
 	};
 };
