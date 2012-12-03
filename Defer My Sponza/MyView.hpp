@@ -57,6 +57,12 @@ private:
 													int windowHeight
 												);
 
+												//! Create the LBuffer
+	void										CreateLBuffer(
+													int windowWidth,
+													int windowHeight
+												);
+
 private:
 
 	struct {

@@ -145,6 +145,33 @@ void MyView::CreateGBuffer(
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+/*
+*	\brief Create the LBuffer
+*/
+void MyView::CreateLBuffer(
+	int windowWidth,
+	int windowHeight
+	)
+{
+	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
+
+	glGenRenderbuffers(1, &m_lbuffer.colorBuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, windowWidth, windowHeight);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+
+	m_lbuffer.depth = m_gbuffer.depth;
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER,0);	
+}
+
 void MyView::
 windowViewWillStart(std::shared_ptr<tyga::Window> window)
 {
@@ -214,28 +241,8 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
                    int height)
 {
     glViewport(0, 0, width, height);
-
 	CreateGBuffer(width, height);
-
-	// SAMS_TODO: MOVE ME
-	// create light buffer
-	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-	
-	glGenRenderbuffers(1, &m_lbuffer.colorBuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_lbuffer.colorBuffer);
-
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
-
-	m_lbuffer.depth = m_gbuffer.depth;
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindRenderbuffer(GL_RENDERBUFFER,0);
+	CreateLBuffer(width, height);
 }
 
 void MyView::
