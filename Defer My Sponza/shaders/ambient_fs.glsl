@@ -28,7 +28,7 @@ void main(void)
 	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 1.0f);
 
 	// specular "Shininess"... I'm pretty sure shinisness isnt a word, and if it is its not the right word, and if it is it's a wank word.
-	if (materialShininess > 0.0f)
+	if (materialShininess < 0.0f)
 	{
 		vec3 L = normalize(directional_light_direction);
 		vec3 N = worldNormal;

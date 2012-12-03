@@ -28,7 +28,7 @@ setScene(std::shared_ptr<const MyScene> scene)
 */
 void MyView::reloadShaders()
 {
-	for( std::map<char*, Shader*>::iterator shaderIt = m_shader.begin(); shaderIt != m_shader.end(); ++shaderIt)
+	for (std::map<char*, Shader*>::iterator shaderIt = m_shader.begin(); shaderIt != m_shader.end(); ++shaderIt)
 	{
 		delete (*shaderIt).second;
 	}
@@ -316,16 +316,17 @@ void MyView::RenderGBuffer(
 
 	// Bind our gbuffer and clear the depth
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glClearStencil(255);
+
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS, 1, ~0);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 	// Enable depth test to less than
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); 
 	glDepthMask(GL_TRUE);
-
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS, 1, ~0);
-	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 	// disable blending
 	glDisable(GL_BLEND);
