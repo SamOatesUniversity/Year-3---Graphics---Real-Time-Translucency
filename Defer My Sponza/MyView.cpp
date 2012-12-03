@@ -178,6 +178,7 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	reloadShaders();
 
+	// create the full screen quad
 	{
 		std::vector<glm::vec2> vertices(4);
 		vertices[0] = glm::vec2(-1, -1);
@@ -380,8 +381,9 @@ void MyView::RenderLBuffer(
 	glStencilFunc(GL_EQUAL, 1, ~0);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
+	// disable depth testing
 	glDisable(GL_DEPTH_TEST);
-
+	
 	// Render the directional light 
 	DrawDirectionalLight(camera);
 
