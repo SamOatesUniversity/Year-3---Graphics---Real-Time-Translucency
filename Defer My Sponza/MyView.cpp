@@ -1,5 +1,4 @@
 #include "MyView.hpp"
-#include "MyScene.hpp"
 #include "FileHelper.hpp"
 #include <tsl/primitives.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -125,7 +124,6 @@ void MyView::CreateGBuffer(
 		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
 		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
-
 		drawBufs[textureIndex] = GL_COLOR_ATTACHMENT0 + textureIndex;
 	}
 
@@ -276,53 +274,12 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	const float aspect_ratio = viewport_size[2] / static_cast<float>(viewport_size[3]);
 
     const MyScene::Camera camera = scene_->camera();
-    const glm::mat4 projection_xform = glm::perspective(
-		camera.vertical_field_of_view_degrees,
-        aspect_ratio,
-        camera.near_plane_distance,
-        camera.far_plane_distance
-	);
-
-    const glm::mat4 view_xform = glm::lookAt(
-		camera.position,
-        camera.position + camera.direction,
-        scene_->upDirection()
-	);
-
+    
 	//////////////////////////////////////////////////////////////////////////
 	// POPULATE THE GBUFFER													//
 	//////////////////////////////////////////////////////////////////////////
 
-	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS); 
-	glDepthMask(GL_TRUE);
-
-	glDisable(GL_BLEND);
-
-	Shader *const gbuffer = m_shader["gbuffer"];
-	glUseProgram(gbuffer->GetProgram());
-
-	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
-
-	const int noofModels = scene_->modelCount();
-	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
-	{
-		const MyScene::Model model = scene_->model(modelIndex);
-		const Mesh mesh = m_meshes[model.mesh_index];
-
-		glm::mat4 xform = glm::mat4(model.xform);
-		glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		const MyScene::Material mat = scene_->material(model.material_index);
-		glUniform3fv(glGetUniformLocation(gbuffer->GetProgram(), "materialColor"), 1, glm::value_ptr(mat.colour));
-		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
-
-		mesh.Draw();		
-	}
+	RenderGBuffer(camera, aspect_ratio);
 
 	//////////////////////////////////////////////////////////////////////////
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA							//
@@ -404,4 +361,58 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		GL_COLOR_BUFFER_BIT, GL_NEAREST
 	);	
 
+}
+
+/*
+*	\brief Render the scene to the GBuffer
+*/
+void MyView::RenderGBuffer(
+		 const MyScene::Camera &camera,
+		 const float &aspect_ratio
+	)
+{
+	const glm::mat4 projection_xform = glm::perspective(
+		camera.vertical_field_of_view_degrees,
+		aspect_ratio,
+		camera.near_plane_distance,
+		camera.far_plane_distance
+	);
+
+	const glm::mat4 view_xform = glm::lookAt(
+		camera.position,
+		camera.position + camera.direction,
+		scene_->upDirection()
+	);
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); 
+	glDepthMask(GL_TRUE);
+
+	glDisable(GL_BLEND);
+
+	Shader *const gbuffer = m_shader["gbuffer"];
+	glUseProgram(gbuffer->GetProgram());
+
+	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
+
+	const int noofModels = scene_->modelCount();
+	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+	{
+		const MyScene::Model model = scene_->model(modelIndex);
+		const Mesh mesh = m_meshes[model.mesh_index];
+
+		glm::mat4 xform = glm::mat4(model.xform);
+		glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
+
+		const MyScene::Material mat = scene_->material(model.material_index);
+		glUniform3fv(glGetUniformLocation(gbuffer->GetProgram(), "materialColor"), 1, glm::value_ptr(mat.colour));
+		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
+
+		mesh.Draw();		
+	}
 }

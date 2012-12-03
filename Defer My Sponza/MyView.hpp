@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WindowViewDelegate.hpp"
+#include "MyScene.hpp"
 #include "tgl.h"
 #include "Shader.h"
 #include "Mesh.h"
@@ -61,6 +62,12 @@ private:
 	void										CreateLBuffer(
 													int windowWidth,
 													int windowHeight
+												);
+
+												//! Render the scene to the GBuffer
+	void										RenderGBuffer(
+													const MyScene::Camera &camera,					//!< The camera of which we want to render from
+													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
 private:
