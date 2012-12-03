@@ -274,86 +274,16 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	const float aspect_ratio = viewport_size[2] / static_cast<float>(viewport_size[3]);
 
     const MyScene::Camera camera = scene_->camera();
-    
-	//////////////////////////////////////////////////////////////////////////
-	// POPULATE THE GBUFFER													//
-	//////////////////////////////////////////////////////////////////////////
-
+    	
+	// POPULATE THE GBUFFER
 	RenderGBuffer(camera, aspect_ratio);
 
-	//////////////////////////////////////////////////////////////////////////
-	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA							//
-	//////////////////////////////////////////////////////////////////////////
+	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
+	RenderLBuffer(camera);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-
-	glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_NOTEQUAL, 0, ~0);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-	// Directional Light 
-	Shader *const ambiant = m_shader["ambiant"];
-	glUseProgram(ambiant->GetProgram());
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
-	glUniform1i(glGetUniformLocation(ambiant->GetProgram(), "sampler_world_position"), 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
-	glUniform1i(glGetUniformLocation(ambiant->GetProgram(), "sampler_world_normal"), 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
-	glUniform1i(glGetUniformLocation(ambiant->GetProgram(), "sampler_material_info"), 2);
-
-	glUniform3fv(glGetUniformLocation(ambiant->GetProgram(), "directional_light_direction"), 1, glm::value_ptr(scene_->globalLightDirection()));
-	glUniform3fv(glGetUniformLocation(ambiant->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));
-
-	glBindVertexArray(m_meshQuad.getVAO());
-	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
-	glBindVertexArray(0);
-
-	// point lights
-	Shader *const pointlight = m_shader["pointlight"];
-	glUseProgram(pointlight->GetProgram());
-
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE); 
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
-	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_position"), 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
-	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_world_normal"), 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
-	glUniform1i(glGetUniformLocation(pointlight->GetProgram(), "sampler_material_info"), 2);
-
-	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
-
-	glBindVertexArray(m_meshQuad.getVAO());
-	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
-	{
-		MyScene::Light light = scene_->light(lightIndex);
-
-		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
-		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
-
-		glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
-	}
-
-	glDisable(GL_STENCIL_TEST);
-
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	// blit the LBuffer to screen
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);				// read from the LBuffer
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);									// draw to the screen
 
 	glBlitFramebuffer(
 		0, 0, viewport_size[2], viewport_size[3],
@@ -367,10 +297,11 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 *	\brief Render the scene to the GBuffer
 */
 void MyView::RenderGBuffer(
-		 const MyScene::Camera &camera,
-		 const float &aspect_ratio
+		 const MyScene::Camera &camera,									//!< The camera of which we want to render from
+		 const float &aspect_ratio										//!< The aspect ratio of the window
 	)
 {
+	// Get the projection matrix
 	const glm::mat4 projection_xform = glm::perspective(
 		camera.vertical_field_of_view_degrees,
 		aspect_ratio,
@@ -378,41 +309,165 @@ void MyView::RenderGBuffer(
 		camera.far_plane_distance
 	);
 
+	// get the view matrix
 	const glm::mat4 view_xform = glm::lookAt(
 		camera.position,
 		camera.position + camera.direction,
 		scene_->upDirection()
 	);
 
-
+	// Bind our gbuffer and clear the depth
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+	// Enable depth test to less than
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); 
 	glDepthMask(GL_TRUE);
 
+	// disable blending
 	glDisable(GL_BLEND);
 
-	Shader *const gbuffer = m_shader["gbuffer"];
+	// Set our shader to use to the gbuffer shader
+	const Shader *const gbuffer = m_shader["gbuffer"];
 	glUseProgram(gbuffer->GetProgram());
 
+	// Set shader uniforms
 	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
 
+	// Draw all our models to the gbuffer
 	const int noofModels = scene_->modelCount();
 	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
 	{
 		const MyScene::Model model = scene_->model(modelIndex);
 		const Mesh mesh = m_meshes[model.mesh_index];
 
+		// cast our model xform to a mat4
 		glm::mat4 xform = glm::mat4(model.xform);
 		glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
 
+		// Set the material data
 		const MyScene::Material mat = scene_->material(model.material_index);
 		glUniform3fv(glGetUniformLocation(gbuffer->GetProgram(), "materialColor"), 1, glm::value_ptr(mat.colour));
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
 
+		// draw the mesh
 		mesh.Draw();		
 	}
+
+	// Bind back to default framebuffer for safety (always use protection kids)
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+/*
+*	\brief Render the LBuffer from the GBuffer data
+*/
+void MyView::RenderLBuffer( 
+		const MyScene::Camera &camera						//!< The camera of which we want to render from
+	)
+{
+	// Bind our LBuffer and clear the color to our background colour
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
+	glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// TODO SAM: Work out what the fuck stenciling i need to do
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	// Render the directional light 
+	DrawDirectionalLight(camera);
+
+	// enable blending so we don't nuke our directional light pass
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE); 
+
+	// Draw the point lights in the scene
+	DrawPointLights(camera);
+
+	glDisable(GL_STENCIL_TEST);
+}
+
+/*
+*	\brief Bind all the gbuffer textures to a shader sampler
+*/
+void MyView::BindGBufferTextures(
+		const Shader *const shader							//!< A pointer to the shader of the samplers to bind
+	)
+{
+	// Pass in our gbuffer position texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_position"), 0);
+
+	// Pass in our gbuffer normal texture
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_normal"), 1);
+
+	// Pass in our gbuffer material information texture
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_material_info"), 2);
+}
+
+/*
+*	\brief Draw the scenes directional light to the lbuffer
+*/
+void MyView::DrawDirectionalLight( 
+		const MyScene::Camera &camera						//!< The camera of which we want to render from
+	)
+{
+	const Shader *const ambiant = m_shader["ambiant"];
+	glUseProgram(ambiant->GetProgram());
+
+	BindGBufferTextures(ambiant);
+
+	// Instantiate our uniforms
+	glUniform3fv(glGetUniformLocation(ambiant->GetProgram(), "directional_light_direction"), 1, glm::value_ptr(scene_->globalLightDirection()));
+	glUniform3fv(glGetUniformLocation(ambiant->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));
+
+	// Draw our full screen quad
+	glBindVertexArray(m_meshQuad.getVAO());
+	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+
+	// Bind back to default for safety
+	glBindVertexArray(0);
+}
+
+/*
+*	\brief Draw the scenes point lights to the lbuffer
+*/
+void MyView::DrawPointLights( 
+		const MyScene::Camera &camera							//!< The camera of which we want to render from
+	)
+{
+	const Shader *const pointlight = m_shader["pointlight"];
+	glUseProgram(pointlight->GetProgram());
+
+	BindGBufferTextures(pointlight);
+
+	// Instantiate our uniforms
+	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
+
+	// bind our full screen quad and render each of our point lights
+	glBindVertexArray(m_meshQuad.getVAO());
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		const MyScene::Light light = scene_->light(lightIndex);
+
+		// set the current point lights data
+		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
+		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+
+		// draw to the lbuffer
+		glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+	}
+
+	// Bind back to default for safety
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

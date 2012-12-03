@@ -70,6 +70,26 @@ private:
 													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
+												//! Render the LBuffer from the GBuffer data
+	void										RenderLBuffer(
+													const MyScene::Camera &camera					//!< The camera of which we want to render from
+												);
+
+												//! Draw the scenes directional light to the lbuffer
+	void										DrawDirectionalLight(
+													const MyScene::Camera &camera					//!< The camera of which we want to render from
+												);
+
+												//! Draw the scenes point lights to the lbuffer
+	void										DrawPointLights(
+													const MyScene::Camera &camera					//!< The camera of which we want to render from
+												);
+
+												//! Bind all the gbuffer textures to a shader sampler
+	void										BindGBufferTextures(
+													const Shader *const shader						//!< A pointer to the shader of the samplers to bind
+												);
+
 private:
 
 	struct {
