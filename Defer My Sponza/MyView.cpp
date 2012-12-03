@@ -272,7 +272,6 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	GLint viewport_size[4];
 	glGetIntegerv(GL_VIEWPORT, viewport_size);
 	const float aspect_ratio = viewport_size[2] / static_cast<float>(viewport_size[3]);
-
     const MyScene::Camera camera = scene_->camera();
     	
 	// POPULATE THE GBUFFER
@@ -289,8 +288,7 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		0, 0, viewport_size[2], viewport_size[3],
 		0, 0, viewport_size[2], viewport_size[3],
 		GL_COLOR_BUFFER_BIT, GL_NEAREST
-	);	
-
+	);
 }
 
 /*
@@ -324,6 +322,10 @@ void MyView::RenderGBuffer(
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); 
 	glDepthMask(GL_TRUE);
+
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS, 1, ~0);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 	// disable blending
 	glDisable(GL_BLEND);
@@ -373,7 +375,6 @@ void MyView::RenderLBuffer(
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// TODO SAM: Work out what the fuck stenciling i need to do
-	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_NOTEQUAL, 0, ~0);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
