@@ -161,6 +161,7 @@ void MyView::CreateLBuffer(
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
 
 	m_lbuffer.depth = m_gbuffer.depth;
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_lbuffer.depth, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
@@ -372,12 +373,14 @@ void MyView::RenderLBuffer(
 {
 	// Bind our LBuffer and clear the color to our background colour
 	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-	glClearColor(0.0f, 0.0f, 0.25f, 1.0f);
+	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// TODO SAM: Work out what the fuck stenciling i need to do
-	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilFunc(GL_EQUAL, 1, ~0);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	glDisable(GL_DEPTH_TEST);
 
 	// Render the directional light 
 	DrawDirectionalLight(camera);
