@@ -72,7 +72,8 @@ private:
 
 												//! Render the LBuffer from the GBuffer data
 	void										RenderLBuffer(
-													const MyScene::Camera &camera					//!< The camera of which we want to render from
+													const MyScene::Camera &camera,					//!< The camera of which we want to render from
+													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
 												//! Draw the scenes directional light to the lbuffer
@@ -82,7 +83,8 @@ private:
 
 												//! Draw the scenes point lights to the lbuffer
 	void										DrawPointLights(
-													const MyScene::Camera &camera					//!< The camera of which we want to render from
+													const MyScene::Camera &camera,					//!< The camera of which we want to render from
+													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
 												//! Bind all the gbuffer textures to a shader sampler
@@ -110,4 +112,5 @@ private:
 	std::map<char*, Shader*>					m_shader;				//!< 
 	std::vector<Mesh>							m_meshes;				//!<
 	Mesh										m_meshQuad;				//!< 
+	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
 };

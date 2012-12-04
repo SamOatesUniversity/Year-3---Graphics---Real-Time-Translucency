@@ -50,13 +50,13 @@ public:
 	void									Draw() const;
 
 											//! Get the number of vertices in the mesh
-	const int								&GetNoofVertices()
+	const int								&GetNoofVertices() const
 											{
 												return m_vertexCount;
 											}
 
 											//! Get the number of elements in the mesh
-	const int								&GetNoofElements()
+	const int								&GetNoofElements() const
 											{
 												return m_elementCount;
 											}
@@ -67,7 +67,13 @@ public:
 												return m_vertexVBO;
 											}
 
-											//! Get the meshes vao
+											//! Get the meshes element vbo
+	GLuint									&getElementVBO()
+											{
+												return m_elementVBO;
+											}
+
+											//! Get a reference of the meshes vao
 	GLuint									&getVAO()
 											{
 												return m_vao;

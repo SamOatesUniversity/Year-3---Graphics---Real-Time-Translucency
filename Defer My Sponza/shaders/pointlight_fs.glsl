@@ -20,6 +20,8 @@ vec3 PointLight(vec3 worldPosition, vec3 worldNormal, vec3 lightPosition, vec3 c
 	float fatt = smoothstep(1.0f, 0.0f, dist / maxrange);
 
 	float lighting = clamp(dot(L, worldNormal), 0.0f, 1.0f) * fatt;
+	//float lighting = clamp(dot(L, worldNormal), 0.0f, 1.0f);
+	color = vec3(1.0f, 0.0f, 1.0f);
 
 	return (color * intensity) * vec3(lighting, lighting, lighting);
 }

@@ -202,6 +202,48 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		m_meshQuad.Create(vertices.size(), 2);
 	}
 
+	// create a sphere mesh to represent the light
+	{
+		tsl::IndexedMesh mesh;
+		tsl::CreateSphere(1.f, 12, &mesh);
+		tsl::ConvertPolygonsToTriangles(&mesh);
+
+		glGenBuffers(1, &m_sphereMesh.getVertexVBO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_sphereMesh.getVertexVBO());
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			mesh.vertex_array.size() * sizeof(glm::vec3),
+			mesh.vertex_array.data(),
+			GL_STATIC_DRAW
+		);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glGenBuffers(1, &m_sphereMesh.getElementVBO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphereMesh.getElementVBO());
+		glBufferData(
+			GL_ELEMENT_ARRAY_BUFFER,
+			mesh.index_array.size() * sizeof(unsigned int),
+			mesh.index_array.data(),
+			GL_STATIC_DRAW
+		);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		glGenVertexArrays(1, &m_sphereMesh.getVAO());
+		glBindVertexArray(m_sphereMesh.getVAO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphereMesh.getElementVBO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_sphereMesh.getVertexVBO());
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(
+			0, 3, 
+			GL_FLOAT, GL_FALSE,
+			sizeof(glm::vec3), 0
+		);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		m_sphereMesh.Create(mesh.vertex_array.size(), mesh.index_array.size());
+	}
+
 	// Load the scene
 	const int noofMeshes = scene_->meshCount();
 	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
@@ -280,7 +322,7 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	RenderGBuffer(camera, aspect_ratio);
 
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
-	RenderLBuffer(camera);
+	RenderLBuffer(camera, aspect_ratio);
 
 	// blit the LBuffer to screen
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);				// read from the LBuffer
@@ -369,31 +411,24 @@ void MyView::RenderGBuffer(
 *	\brief Render the LBuffer from the GBuffer data
 */
 void MyView::RenderLBuffer( 
-		const MyScene::Camera &camera						//!< The camera of which we want to render from
+		const MyScene::Camera &camera,						//!< The camera of which we want to render from
+		const float &aspect_ratio							//!< The aspect ratio of the window
 	)
 {
 	// Bind our LBuffer and clear the color to our background colour
 	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-	glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// TODO SAM: Work out what the fuck stenciling i need to do
 	glStencilFunc(GL_EQUAL, 1, ~0);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-	// disable depth testing
-	glDisable(GL_DEPTH_TEST);
-	
 	// Render the directional light 
 	DrawDirectionalLight(camera);
 
-	// enable blending so we don't nuke our directional light pass
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE); 
-
 	// Draw the point lights in the scene
-	DrawPointLights(camera);
+	DrawPointLights(camera, aspect_ratio);
 
 	glDisable(GL_STENCIL_TEST);
 }
@@ -449,9 +484,30 @@ void MyView::DrawDirectionalLight(
 *	\brief Draw the scenes point lights to the lbuffer
 */
 void MyView::DrawPointLights( 
-		const MyScene::Camera &camera							//!< The camera of which we want to render from
+		const MyScene::Camera &camera,							//!< The camera of which we want to render from
+		const float &aspect_ratio								//!< The aspect ratio of the window
 	)
 {
+	// Get the projection matrix
+	const glm::mat4 projection_xform = glm::perspective(
+		camera.vertical_field_of_view_degrees,
+		aspect_ratio,
+		camera.near_plane_distance,
+		camera.far_plane_distance
+	);
+
+	// get the view matrix
+	const glm::mat4 view_xform = glm::lookAt(
+		camera.position,
+		camera.position + camera.direction,
+		scene_->upDirection()
+	);
+
+	// enable blending so we don't nuke our directional light pass
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE); 
+
 	const Shader *const pointlight = m_shader["pointlight"];
 	glUseProgram(pointlight->GetProgram());
 
@@ -459,19 +515,102 @@ void MyView::DrawPointLights(
 
 	// Instantiate our uniforms
 	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
+	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
+
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glEnable(GL_CULL_FACE);
+
+	// set render states
+	glCullFace(GL_FRONT);
+	glStencilFunc(GL_ALWAYS, 0, ~0);
+	glStencilOp(GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+
+	// Enable depth test to less than
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS); 
+	glDepthMask(GL_FALSE);
 
 	// bind our full screen quad and render each of our point lights
-	glBindVertexArray(m_meshQuad.getVAO());
 	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
 	{
-		const MyScene::Light light = scene_->light(lightIndex);
+		MyScene::Light light = scene_->light(lightIndex);
+
+		// Create a world matrix for the light mesh
+		glm::mat4 xform;
+		xform = glm::translate(xform, light.position);
+		xform = glm::scale(xform, glm::vec3(light.range));
+		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
 
 		// set the current point lights data
 		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
 		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
 
 		// draw to the lbuffer
-		glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+		m_sphereMesh.Draw();
+	}
+
+	// set render states
+	glCullFace(GL_BACK);
+	glStencilFunc(GL_ALWAYS, 0, ~0);
+	glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_GREATER); 
+	glDepthMask(GL_FALSE);
+
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		MyScene::Light light = scene_->light(lightIndex);
+
+		// Create a world matrix for the light mesh
+		glm::mat4 xform;
+		xform = glm::translate(xform, light.position);
+		xform = glm::scale(xform, glm::vec3(light.range));
+		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
+
+		// set the current point lights data
+		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
+		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+
+		// draw to the lbuffer
+		m_sphereMesh.Draw();
+	}
+
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	glDisable(GL_CULL_FACE);
+
+	// enable blending so we don't nuke our directional light pass
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE); 
+
+	// set render states
+	glCullFace(GL_FRONT);
+	glStencilFunc(GL_NOTEQUAL, 0, ~0);
+	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+	// disable depth testing
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		MyScene::Light light = scene_->light(lightIndex);
+
+		// Create a world matrix for the light mesh
+		glm::mat4 xform;
+		xform = glm::translate(xform, light.position);
+		xform = glm::scale(xform, glm::vec3(light.range));
+		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
+
+		// set the current point lights data
+		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
+		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
+
+		// draw to the lbuffer
+		m_sphereMesh.Draw();
 	}
 
 	// Bind back to default for safety
