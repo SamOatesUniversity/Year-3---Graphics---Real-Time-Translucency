@@ -108,6 +108,7 @@
     <ClInclude Include="MyView.hpp" />
     <ClInclude Include=".\MyController.hpp" />
     <ClInclude Include="MyScene.hpp" />
+    <ClInclude Include="ProFy.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -119,6 +120,7 @@
     <ClCompile Include=".\MyController.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MyScene.cpp" />
+    <ClCompile Include="ProFy.cpp" />
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
