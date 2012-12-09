@@ -528,7 +528,7 @@ void MyView::DrawPointLights(
 
 	// Enable depth test to less than
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS); 
+	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
 
 	// bind our full screen quad and render each of our point lights
@@ -556,7 +556,7 @@ void MyView::DrawPointLights(
 	glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_GREATER); 
+	glDepthFunc(GL_GEQUAL); 
 	glDepthMask(GL_FALSE);
 
 	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
@@ -587,7 +587,6 @@ void MyView::DrawPointLights(
 	glBlendFunc(GL_ONE, GL_ONE); 
 
 	// set render states
-	glCullFace(GL_FRONT);
 	glStencilFunc(GL_NOTEQUAL, 0, ~0);
 	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
