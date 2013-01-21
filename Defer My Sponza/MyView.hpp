@@ -5,6 +5,7 @@
 #include "tgl.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "ProFy.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -113,4 +114,11 @@ private:
 	std::vector<Mesh>							m_meshes;				//!<
 	Mesh										m_meshQuad;				//!< 
 	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
+
+	GLuint										m_startTimer;			//!< 
+
+	struct {
+		float fastest;
+		float slowest;
+	} m_totalRenderTimings;
 };

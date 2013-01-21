@@ -275,6 +275,10 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		delete[] vertices;
 		delete[] elements;
 	}
+
+	ProFy::GetInstance()->CreateGLTimer(m_startTimer);
+	m_totalRenderTimings.slowest = 0;
+	m_totalRenderTimings.fastest = 0;
 }
 
 void MyView::
@@ -318,12 +322,14 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	const float aspect_ratio = viewport_size[2] / static_cast<float>(viewport_size[3]);
     const MyScene::Camera camera = scene_->camera();
     	
+	ProFy::GetInstance()->StartGLTimer(m_startTimer);
+
 	// POPULATE THE GBUFFER
 	RenderGBuffer(camera, aspect_ratio);
-
+	
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
 	RenderLBuffer(camera, aspect_ratio);
-
+	
 	// blit the LBuffer to screen
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);				// read from the LBuffer
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);									// draw to the screen
@@ -333,6 +339,23 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		0, 0, viewport_size[2], viewport_size[3],
 		GL_COLOR_BUFFER_BIT, GL_NEAREST
 	);
+	
+	GLuint64 timeTaken = ProFy::GetInstance()->EndGLTimer(m_startTimer);
+	if (timeTaken != NULL) 
+	{
+		system("cls");
+		float thisTime = static_cast<float>(timeTaken) / 1000000.0f;
+		if (m_totalRenderTimings.slowest == 0 || m_totalRenderTimings.slowest < thisTime)
+			m_totalRenderTimings.slowest = thisTime;
+
+		if (m_totalRenderTimings.fastest == 0 || m_totalRenderTimings.fastest > thisTime)
+			m_totalRenderTimings.fastest = thisTime;
+
+		std::cout << "Current Render Time: " << (timeTaken / 1000000.0) << "ms" << std::endl;
+		std::cout << "Fastest Render Time: " << m_totalRenderTimings.fastest << "ms" << std::endl;
+		std::cout << "Slowest Render Time: " << m_totalRenderTimings.slowest << "ms" << std::endl;
+	}
+
 }
 
 /*
