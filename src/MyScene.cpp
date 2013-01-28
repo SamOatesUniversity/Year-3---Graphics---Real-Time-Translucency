@@ -9,7 +9,7 @@ MyScene()
     start_time_ = std::chrono::system_clock::now();
     time_seconds_ = 0.f;
 
-    if (!readFile("sponza.tcf")) {
+    if (!readFile("assets/sponza.tcf")) {
         std::cerr << "Failed to read sponza.tcf data file" << std::endl;
     }
 
