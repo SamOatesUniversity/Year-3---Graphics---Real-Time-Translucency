@@ -427,6 +427,9 @@ void MyView::RenderGBuffer(
 	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(gbuffer->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
 
+	static int time = 0;
+	time++;
+	
 	// Draw all our models to the gbuffer
 	const int noofModels = scene_->modelCount();
 	for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
@@ -442,6 +445,8 @@ void MyView::RenderGBuffer(
 		const MyScene::Material mat = scene_->material(model.material_index);
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), GetMaterialIndexFromColor(mat.colour));
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
+
+		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "TIME"), time + modelIndex);
 
 		// draw the mesh
 		mesh.Draw();		
@@ -472,7 +477,7 @@ void MyView::RenderLBuffer(
 	DrawDirectionalLight(camera);
 
 	// Draw the point lights in the scene
-	//DrawPointLights(camera, aspect_ratio);
+	DrawPointLights(camera, aspect_ratio);
 
 	glDisable(GL_STENCIL_TEST);
 }
