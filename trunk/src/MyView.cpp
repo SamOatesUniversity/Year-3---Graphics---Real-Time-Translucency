@@ -518,85 +518,16 @@ void MyView::DrawPointLights(
 	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
 
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glEnable(GL_CULL_FACE);
-
-	// set render states
-	glCullFace(GL_FRONT);
-	glStencilFunc(GL_ALWAYS, 0, ~0);
-	glStencilOp(GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-
-	// Enable depth test to less than
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glDepthMask(GL_FALSE);
-
-	// bind our full screen quad and render each of our point lights
-	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
-	{
-		MyScene::Light light = scene_->light(lightIndex);
-
-		// Create a world matrix for the light mesh
-		glm::mat4 xform;
-		xform = glm::translate(xform, light.position);
-		xform = glm::scale(xform, glm::vec3(light.range));
-		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		// set the current point lights data
-		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
-		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
-
-		// draw to the lbuffer
-		m_sphereMesh.Draw();
-	}
-
-	// set render states
-	glCullFace(GL_BACK);
-	glStencilFunc(GL_ALWAYS, 0, ~0);
-	glStencilOp(GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_GEQUAL); 
-	glDepthMask(GL_FALSE);
-
-	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
-	{
-		MyScene::Light light = scene_->light(lightIndex);
-
-		// Create a world matrix for the light mesh
-		glm::mat4 xform;
-		xform = glm::translate(xform, light.position);
-		xform = glm::scale(xform, glm::vec3(light.range));
-		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		// set the current point lights data
-		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
-		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
-
-		// draw to the lbuffer
-		m_sphereMesh.Draw();
-	}
-
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	glDisable(GL_CULL_FACE);
-
-	// enable blending so we don't nuke our directional light pass
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE); 
-
-	// set render states
-	glStencilFunc(GL_NOTEQUAL, 0, ~0);
-	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-
 	// disable depth testing
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
 	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
 	{
-		MyScene::Light light = scene_->light(lightIndex);
+		const MyScene::Light light = scene_->light(lightIndex);
 
 		// Create a world matrix for the light mesh
 		glm::mat4 xform;
@@ -611,6 +542,8 @@ void MyView::DrawPointLights(
 		// draw to the lbuffer
 		m_sphereMesh.Draw();
 	}
+
+	glCullFace(GL_BACK);
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
