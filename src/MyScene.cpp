@@ -88,7 +88,7 @@ readFile(std::string filepath)
     int numberOfShapes[] = { sizeof(redShapes) / sizeof(int),
                              sizeof(greenShapes) / sizeof(int),
                              sizeof(yellowShapes) / sizeof(int) };
-    glm::vec3 colours[3] = { glm::vec3(1.f, 0.33f, 0.f),
+    glm::vec3 colours[3] = { glm::vec3(1.f, 0.0f, 0.f),
                              glm::vec3(0.2f, 0.8f, 0.2f),
                              glm::vec3(0.8f, 0.8f, 0.2f) };
     float shininess[3] = { 0.f, 64.f, 128.f };

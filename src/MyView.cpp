@@ -279,6 +279,22 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		delete[] vertices;
 		delete[] elements;
 	}
+
+	 tyga::Image texture_image = tyga::imageFromPNG("assets/textures/brick-dark_COLOR.png");
+	 glGenTextures(1, &m_brickTexture.diffuse);
+	 glBindTexture(GL_TEXTURE_2D, m_brickTexture.diffuse);
+	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	 texture_image = tyga::imageFromPNG("assets/textures/brick-dark_NRM.png");
+	 glGenTextures(1, &m_brickTexture.normal);
+	 glBindTexture(GL_TEXTURE_2D, m_brickTexture.normal);
+	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	 glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void MyView::
@@ -337,6 +353,30 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 		0, 0, viewport_size[2], viewport_size[3],
 		GL_COLOR_BUFFER_BIT, GL_NEAREST
 	);
+}
+
+float GetMaterialIndexFromColor(
+		glm::vec3 color
+	)
+{
+	// walls
+	if (color.r == 0.8f && color.g == 0.8f && color.b == 0.8f)
+		return 0.1f;
+
+	// curtains
+	if (color.r == 1.0f && color.g == 0.0f && color.b == 0.0f)
+		return 0.2f;
+	
+	// plants
+	if (color.r == 0.2f && color.g == 0.8f && color.b == 0.2f)
+		return 0.3f;
+
+	// poles
+	if (color.r == 0.8f && color.g == 0.8f && color.b == 0.2f)
+		return 0.4f;
+
+	// unknown material
+	return 0.0f;
 }
 
 /*
@@ -400,7 +440,7 @@ void MyView::RenderGBuffer(
 
 		// Set the material data
 		const MyScene::Material mat = scene_->material(model.material_index);
-		glUniform3fv(glGetUniformLocation(gbuffer->GetProgram(), "materialColor"), 1, glm::value_ptr(mat.colour));
+		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), GetMaterialIndexFromColor(mat.colour));
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
 
 		// draw the mesh
@@ -432,7 +472,7 @@ void MyView::RenderLBuffer(
 	DrawDirectionalLight(camera);
 
 	// Draw the point lights in the scene
-	DrawPointLights(camera, aspect_ratio);
+	//DrawPointLights(camera, aspect_ratio);
 
 	glDisable(GL_STENCIL_TEST);
 }
@@ -466,8 +506,13 @@ void MyView::BindGBufferTextures(
 
 	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::texcoords]);
-	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_texcoord"), 4);
+	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.diffuse);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_diffuse"), 4);
+
+	// Pass in our gbuffer material information texture
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.normal);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_normal"), 5);
 }
 
 /*
