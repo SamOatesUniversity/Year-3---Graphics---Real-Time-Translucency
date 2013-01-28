@@ -38,7 +38,7 @@ void main(void)
 	vec3 lighting = PointLight(worldPosition, worldNormal, pointlight_position, materialColor, 1.0f, pointlight_range);
 
 	// specular "Shininess"... I'm pretty sure shinisness isnt a word, and if it is its not the right word, and if it is it's a wank word.
-	if (materialShininess < 0.0f)
+	if (materialShininess > 0.0f)
 	{
 		vec3 L = normalize(pointlight_position - worldPosition);
 		vec3 N = worldNormal;
@@ -46,7 +46,7 @@ void main(void)
 		vec3 R = reflect(-V, N);
 
 		float RdL = clamp(dot(R, L), 0.0, 1.0);
-		vec3 specular = vec3(pow(RdL, materialShininess * 5.0f)) * 10.0f;
+		vec3 specular = vec3(pow(RdL, materialShininess));
 
 		lighting = lighting * specular;
 	}

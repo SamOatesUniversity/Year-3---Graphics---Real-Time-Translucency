@@ -19,7 +19,6 @@ struct GBufferTexture {
 		normal,
 		material,
 		tangents,
-		texcoords,
 		noof
 	};
 };
@@ -115,4 +114,10 @@ private:
 	std::vector<Mesh>							m_meshes;				//!<
 	Mesh										m_meshQuad;				//!< 
 	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
+
+	struct {
+		GLuint diffuse;
+		GLuint normal;
+	} m_brickTexture;
+
 };
