@@ -7,8 +7,8 @@ struct Vertex
 {
 	glm::vec3 position;												//!< The position of the vertex
 	glm::vec3 normal;												//!< The normal of the vertex
-	//glm::vec3 tangent;												//!< The tangent of the vertex
-	//glm::vec2 texcoord;												//!< The tangent of the vertex
+	glm::vec3 tangent;												//!< The tangent of the vertex
+	glm::vec2 texcoord;												//!< The texcoords of the vertex
 };
 
 class Mesh {

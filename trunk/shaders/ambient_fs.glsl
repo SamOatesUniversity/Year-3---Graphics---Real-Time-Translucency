@@ -3,6 +3,8 @@
 uniform sampler2DRect sampler_world_position;
 uniform sampler2DRect sampler_world_normal;
 uniform sampler2DRect sampler_material_info;
+uniform sampler2DRect sampler_world_tangent;
+uniform sampler2DRect sampler_world_texcoord;
 
 uniform vec3 directional_light_direction = vec3(0.0f, 1.0f, 0.5f);
 uniform vec3 camera_position;
@@ -21,7 +23,10 @@ void main(void)
 	vec3 worldPosition = texelFetch(sampler_world_position, p).xyz;
 	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
 	vec4 materialInfo = texelFetch(sampler_material_info, p);
+	vec3 worldTangent = texelFetch(sampler_world_tangent, p).xyz;
+	vec2 worldTexCoord = texelFetch(sampler_world_texcoord, p).xy;
 
+	/*
 	vec3 materialColor = materialInfo.xyz;
 	float materialShininess = materialInfo.w;
 
@@ -40,7 +45,11 @@ void main(void)
 
 		lighting = lighting * specular;
 	}
+	
 
 	reflected_light = lighting;
+	*/
+
+	reflected_light = worldTangent;
 
 }

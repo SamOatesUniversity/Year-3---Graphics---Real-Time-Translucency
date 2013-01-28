@@ -74,9 +74,31 @@ void Mesh::Create(
 		1, 
 		3, 
 		GL_FLOAT, 
-		GL_TRUE,
+		GL_FALSE,
 		sizeof(Vertex), 
 		TGL_BUFFER_OFFSET(3 * sizeof(float))
+		);
+
+	// tangents
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(
+		2, 
+		3, 
+		GL_FLOAT, 
+		GL_FALSE,
+		sizeof(Vertex), 
+		TGL_BUFFER_OFFSET(6 * sizeof(float))
+		);
+
+	// tex-coords
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(
+		3, 
+		2, 
+		GL_FLOAT, 
+		GL_FALSE,
+		sizeof(Vertex), 
+		TGL_BUFFER_OFFSET(9 * sizeof(float))
 		);
 
 	// elements
