@@ -18,6 +18,8 @@ struct GBufferTexture {
 		position,
 		normal,
 		material,
+		tangents,
+		texcoords,
 		noof
 	};
 };

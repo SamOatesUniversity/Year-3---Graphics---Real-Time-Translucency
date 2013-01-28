@@ -91,6 +91,8 @@ void MyView::reloadShaders()
 		glAttachShader(gbuffer->GetProgram(), gbuffer->GetVertexShader());
 		glBindAttribLocation(gbuffer->GetProgram(), 0, "vertex_position");
 		glBindAttribLocation(gbuffer->GetProgram(), 1, "vertex_normal");
+		glBindAttribLocation(gbuffer->GetProgram(), 2, "vertex_tangent");
+		glBindAttribLocation(gbuffer->GetProgram(), 3, "vertex_texcoord");
 
 		glAttachShader(gbuffer->GetProgram(), gbuffer->GetFragmentShader());
 		glBindFragDataLocation(gbuffer->GetProgram(), 0, "fragment_colour");
@@ -257,6 +259,8 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		{
 			vertices[vertexIndex].position = sceneMesh.position_array[vertexIndex];
 			vertices[vertexIndex].normal = sceneMesh.normal_array[vertexIndex];
+			vertices[vertexIndex].tangent = sceneMesh.tangent_array[vertexIndex];
+			vertices[vertexIndex].texcoord = sceneMesh.texcoord_array[vertexIndex];
 		}
 
 		// populate elements (index) array
@@ -454,6 +458,16 @@ void MyView::BindGBufferTextures(
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_material_info"), 2);
+
+	// Pass in our gbuffer material information texture
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::tangents]);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_tangent"), 3);
+
+	// Pass in our gbuffer material information texture
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::texcoords]);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_texcoord"), 4);
 }
 
 /*
