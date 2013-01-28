@@ -26,7 +26,6 @@ void main(void)
 	vec3 worldTangent = texelFetch(sampler_world_tangent, p).xyz;
 	vec2 worldTexCoord = texelFetch(sampler_world_texcoord, p).xy;
 
-	/*
 	vec3 materialColor = materialInfo.xyz;
 	float materialShininess = materialInfo.w;
 
@@ -48,8 +47,4 @@ void main(void)
 	
 
 	reflected_light = lighting;
-	*/
-
-	reflected_light = worldTangent;
-
 }
