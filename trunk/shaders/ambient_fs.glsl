@@ -4,7 +4,6 @@ uniform sampler2DRect sampler_world_position;
 uniform sampler2DRect sampler_world_normal;
 uniform sampler2DRect sampler_material_info;
 uniform sampler2DRect sampler_world_tangent;
-uniform sampler2DRect sampler_world_texcoord;
 
 uniform sampler2D sampler_brick_diffuse;
 uniform sampler2D sampler_brick_normal;
@@ -49,25 +48,15 @@ void main(void)
 	float materialShininess = materialInfo.w;
 
 	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 1.0f);
-
-	// specular "Shininess"... I'm pretty sure shinisness isnt a word, and if it is its not the right word, and if it is it's a wank word.
-	if (materialShininess < 0.0f)
-	{
-		vec3 L = normalize(directional_light_direction);
-		vec3 N = worldNormal;
-		vec3 V = normalize(camera_position - worldPosition);
-		vec3 R = reflect(-V, N);
-
-		float RdL = clamp(dot(R, L), 0.0, 1.0);
-		vec3 specular = vec3(pow(RdL, materialShininess));
-
-		lighting = lighting * specular;
-	}
 	
 	if (materialInfo.z > 0.05f && materialInfo.z < 0.15f)
 	{
 		vec3 diffuesTexture = texture(sampler_brick_diffuse, materialInfo.xy).rgb;
-		reflected_light = lighting * diffuesTexture;
+		vec3 normal = normalize(texture2D(sampler_brick_normal, materialInfo.xy).rgb * 2.0 - 1.0);
+		vec3 L = normalize(directional_light_direction);
+		float diffuse = max(dot(normal, L), 0.0); 
+
+		reflected_light = lighting + (diffuesTexture * diffuse);
 	}
 	else
 	{
