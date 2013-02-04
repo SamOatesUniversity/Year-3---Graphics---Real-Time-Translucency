@@ -1,9 +1,9 @@
 #version 330
 
-uniform sampler2DRect sampler_world_position;
-uniform sampler2DRect sampler_world_normal;
-uniform sampler2DRect sampler_material_info;
-uniform sampler2DRect sampler_world_tangent;
+uniform sampler2DMS sampler_world_position;
+uniform sampler2DMS sampler_world_normal;
+uniform sampler2DMS sampler_material_info;
+uniform sampler2DMS sampler_world_tangent;
 
 uniform sampler2D sampler_brick_diffuse;
 uniform sampler2D sampler_brick_normal;
@@ -39,10 +39,10 @@ void main(void)
 {
 	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 
-	vec3 worldPosition = texelFetch(sampler_world_position, p).xyz;
-	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
-	vec4 materialInfo = texelFetch(sampler_material_info, p);
-	vec3 worldTangent = texelFetch(sampler_world_tangent, p).xyz;
+	vec3 worldPosition = texelFetch(sampler_world_position, p, 0).xyz;
+	vec3 worldNormal = texelFetch(sampler_world_normal, p, 0).xyz;
+	vec4 materialInfo = texelFetch(sampler_material_info, p, 0);
+	vec3 worldTangent = texelFetch(sampler_world_tangent, p, 0).xyz;
 	
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;

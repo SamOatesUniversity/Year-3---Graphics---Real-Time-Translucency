@@ -123,26 +123,30 @@ void MyView::CreateGBuffer(
 
 	// setup colour buffers
 	for (unsigned int textureIndex = 0; textureIndex < GBufferTexture::noof; ++textureIndex) {
-		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[textureIndex]);
+		//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB32F, windowWidth, windowHeight, GL_TRUE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[textureIndex], 0);
 		drawBufs[textureIndex] = GL_COLOR_ATTACHMENT0 + textureIndex;
 	}
 
 	// setup depth
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.depth);
+	//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.depth, 0);
 
 	glDrawBuffers(GBufferTexture::noof, drawBufs);
 
-	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	const GLenum errorCode = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(errorCode != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "Failed to create GBuffer!" << std::endl;
 		return;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_MULTISAMPLE);
 }
 
 /*
@@ -159,13 +163,15 @@ void MyView::CreateLBuffer(
 	glGenRenderbuffers(1, &m_lbuffer.colorBuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, m_lbuffer.colorBuffer);
 
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, windowWidth, windowHeight);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, windowWidth, windowHeight);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGB8, windowWidth, windowHeight);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
 
 	m_lbuffer.depth = m_gbuffer.depth;
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_lbuffer.depth, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, m_lbuffer.depth, 0);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+	const GLenum errorCode = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (errorCode != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
 	}
 
@@ -491,30 +497,30 @@ void MyView::BindGBufferTextures(
 {
 	// Pass in our gbuffer position texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[GBufferTexture::position]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_position"), 0);
 
 	// Pass in our gbuffer normal texture
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::normal]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_normal"), 1);
 
 	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::material]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_material_info"), 2);
 
-	// Pass in our gbuffer material information texture
+	// Pass in our gbuffer tangent information texture
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::tangents]);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::tangents]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_tangent"), 3);
 
-	// Pass in our gbuffer material information texture
+	// 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.diffuse);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_diffuse"), 4);
 
-	// Pass in our gbuffer material information texture
+	// 
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.normal);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_normal"), 5);
