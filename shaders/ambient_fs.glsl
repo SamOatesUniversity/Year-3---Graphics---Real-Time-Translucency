@@ -1,5 +1,7 @@
 #version 330
 
+#include "directionalLight.fs"
+
 uniform sampler2DMS sampler_world_position;
 uniform sampler2DMS sampler_world_normal;
 uniform sampler2DMS sampler_material_info;

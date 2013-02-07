@@ -28,6 +28,11 @@ public:
 										const char *fragmentShader				//!< Name of the fragment shader
 									);
 
+									//! Process the shader code handling #includes ect...
+	const bool						ProcessShaderCode(
+										std::string &shadercode
+									);
+
 									//! Get the shader program
 	const GLuint					GetProgram() const
 									{
