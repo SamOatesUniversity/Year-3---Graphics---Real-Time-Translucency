@@ -32,6 +32,10 @@ const bool Shader::Load(
 	m_vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 
     std::string vertex_shader_string = tyga::stringFromFile(vertexShader);
+
+	if (!ProcessShaderCode(vertex_shader_string))
+		return false;
+
     const char *vertex_shader_code = vertex_shader_string.c_str();
 
     glShaderSource(
@@ -50,7 +54,7 @@ const bool Shader::Load(
 	);
 
     if (compile_status != GL_TRUE) {
-        const int string_length = 1024;
+        static const int string_length = 1024;
         GLchar log[string_length]= "";
         glGetShaderInfoLog(
 			m_vertex_shader,
@@ -64,6 +68,10 @@ const bool Shader::Load(
  
     m_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     std::string fragment_shader_string = tyga::stringFromFile(fragmentShader);
+
+	if (!ProcessShaderCode(fragment_shader_string))
+		return false;
+
     const char *const fragment_shader_code = fragment_shader_string.c_str();
 
     glShaderSource(
@@ -82,7 +90,7 @@ const bool Shader::Load(
 	);
     
 	if (compile_status != GL_TRUE) {
-        const int string_length = 1024;
+        static const int string_length = 1024;
         GLchar log[string_length]= "";
         glGetShaderInfoLog(
 			m_fragment_shader,
@@ -96,6 +104,27 @@ const bool Shader::Load(
     }
 
 	m_program = glCreateProgram();
+
+	return true;
+}
+
+const bool Shader::ProcessShaderCode(
+		std::string &shadercode
+	)
+{
+	// handle #include 
+	size_t includeIndex = 0;
+	while ((includeIndex = shadercode.find("#include", includeIndex)) != std::string::npos)
+	{
+		// get the #include file
+		size_t includedFileIndexStart = shadercode.find("\"", includeIndex);
+		size_t includedFileIndexEnd = shadercode.find("\"", includedFileIndexStart + 1);
+
+		std::string includeFileName = shadercode.substr(includedFileIndexStart + 1, includedFileIndexEnd - includedFileIndexStart - 1);
+		std::cout << "Found #include of file name: " << includeFileName << "\n";
+
+		shadercode.replace(includeIndex, includedFileIndexEnd - includeIndex, "//parsed-include");
+	}
 
 	return true;
 }
