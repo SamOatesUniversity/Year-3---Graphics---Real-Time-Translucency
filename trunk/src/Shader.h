@@ -30,6 +30,7 @@ public:
 
 									//! Process the shader code handling #includes ect...
 	const bool						ProcessShaderCode(
+										std::string shaderLocation,
 										std::string &shadercode
 									);
 

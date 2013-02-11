@@ -1,6 +1,6 @@
 #version 330
 
-#include "directionalLight.fs"
+#include "lighting/directionalLight.fs"
 
 uniform sampler2DMS sampler_world_position;
 uniform sampler2DMS sampler_world_normal;
@@ -14,11 +14,6 @@ uniform vec3 directional_light_direction = vec3(0.0f, 1.0f, 0.5f);
 uniform vec3 camera_position;
 
 out vec3 reflected_light;
-
-vec3 DirectionalLight(vec3 worldNormal, vec3 direction, vec3 colour, float intensity)
-{
-    return colour * (clamp(dot(direction, worldNormal), 0.0, 1.0) * intensity);
-}
 
 vec3 GetMaterialColorFromID(float materialIndex)
 {
