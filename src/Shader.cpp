@@ -33,7 +33,7 @@ const bool Shader::Load(
 
     std::string vertex_shader_string = tyga::stringFromFile(vertexShader);
 
-	if (!ProcessShaderCode(vertex_shader_string))
+	if (!ProcessShaderCode(vertexShader, vertex_shader_string))
 		return false;
 
     const char *vertex_shader_code = vertex_shader_string.c_str();
@@ -69,7 +69,7 @@ const bool Shader::Load(
     m_fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     std::string fragment_shader_string = tyga::stringFromFile(fragmentShader);
 
-	if (!ProcessShaderCode(fragment_shader_string))
+	if (!ProcessShaderCode(fragmentShader, fragment_shader_string))
 		return false;
 
     const char *const fragment_shader_code = fragment_shader_string.c_str();
@@ -109,9 +109,19 @@ const bool Shader::Load(
 }
 
 const bool Shader::ProcessShaderCode(
+		std::string shaderLocation,
 		std::string &shadercode
 	)
 {
+	std::string currentFolderLocation = "./";
+
+	size_t lastSlash = std::string::npos;
+	if ((lastSlash = shaderLocation.find_last_of("/")) != std::string::npos)
+	{
+		currentFolderLocation = shaderLocation.substr(0, lastSlash);
+		currentFolderLocation += "/";
+	}
+
 	// handle #include 
 	size_t includeIndex = 0;
 	while ((includeIndex = shadercode.find("#include", includeIndex)) != std::string::npos)
@@ -121,9 +131,18 @@ const bool Shader::ProcessShaderCode(
 		size_t includedFileIndexEnd = shadercode.find("\"", includedFileIndexStart + 1);
 
 		std::string includeFileName = shadercode.substr(includedFileIndexStart + 1, includedFileIndexEnd - includedFileIndexStart - 1);
-		std::cout << "Found #include of file name: " << includeFileName << "\n";
+		std::cout << "Found #include of file name: " << currentFolderLocation + includeFileName << "\n";
 
-		shadercode.replace(includeIndex, includedFileIndexEnd - includeIndex, "//parsed-include");
+		// load the include file
+		std::string vertex_shader_string = tyga::stringFromFile(currentFolderLocation + includeFileName);
+		if (vertex_shader_string.length() == 0)
+		{
+			std::cout << "Found #include of file name: " << includeFileName << "\n";
+			continue;
+		}
+
+		// replace the #include with the includes data
+		shadercode.replace(includeIndex, includedFileIndexEnd - includeIndex + 1, vertex_shader_string);
 	}
 
 	return true;
