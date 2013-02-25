@@ -83,6 +83,12 @@
       <UniqueIdentifier>{67222cb8-4d90-4a6e-bc74-212109e48c9c}</UniqueIdentifier>
       <Extensions>*.glsl</Extensions>
     </Filter>
+    <Filter Include="Shader Files\lighting">
+      <UniqueIdentifier>{b46a0524-c12a-407b-9182-4cee6074bfba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader Files\antialiasing">
+      <UniqueIdentifier>{f89acbfb-3ffb-409e-b436-2cee99fcc361}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\ambient_fs.glsl">
@@ -102,6 +108,21 @@
     </None>
     <None Include="shaders\pointlight_vs.glsl">
       <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\postprocessing_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\postprocessing_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\lighting\directionalLight.fs">
+      <Filter>Shader Files\lighting</Filter>
+    </None>
+    <None Include="shaders\antialiasing\blur.fs">
+      <Filter>Shader Files\antialiasing</Filter>
+    </None>
+    <None Include="shaders\antialiasing\edge-detetion.fs">
+      <Filter>Shader Files\antialiasing</Filter>
     </None>
   </ItemGroup>
 </Project>
