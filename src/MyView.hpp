@@ -77,6 +77,9 @@ private:
 													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
+												//! Perform post processing on the lbuffer
+	void										PerformPostProcessing();
+
 												//! Draw the scenes directional light to the lbuffer
 	void										DrawDirectionalLight(
 													const MyScene::Camera &camera					//!< The camera of which we want to render from
@@ -105,6 +108,7 @@ private:
 	struct {
 		GLuint frameBuffer;
 		GLuint colorBuffer;
+		GLuint colorTexture;
 		GLuint depth;
 	} m_lbuffer;
 

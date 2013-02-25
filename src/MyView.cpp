@@ -56,7 +56,7 @@ void MyView::reloadShaders()
 		m_shader["ambiant"] = ambiant;
 	}	
 
-	// Create an ambient shader
+	// Create a pointlight shader
 	Shader *const pointlight = new Shader();
 	if (!pointlight->Load("shaders/pointlight_vs.glsl", "shaders/pointlight_fs.glsl")) 
 	{
@@ -102,6 +102,28 @@ void MyView::reloadShaders()
 		std::cout << "Loaded gbuffer shader..." << std::endl;
 
 		m_shader["gbuffer"] = gbuffer;
+	}
+
+	// Create post processing shader
+	Shader *const postprocessing = new Shader();
+	if (!postprocessing->Load("shaders/postprocessing_vs.glsl", "shaders/postprocessing_fs.glsl"))
+	{
+		std::cout << "Failed to load the post processing shader!" << std::endl;
+		system("PAUSE");
+	}
+	else
+	{
+		glAttachShader(postprocessing->GetProgram(), postprocessing->GetVertexShader());
+		glBindAttribLocation(postprocessing->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(postprocessing->GetProgram(), postprocessing->GetFragmentShader());
+		glBindFragDataLocation(postprocessing->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(postprocessing->GetProgram());
+
+		std::cout << "Loaded post processing shader..." << std::endl;
+
+		m_shader["postprocessing"] = postprocessing;
 	}
 }
 
@@ -160,12 +182,13 @@ void MyView::CreateLBuffer(
 	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 
-	glGenRenderbuffers(1, &m_lbuffer.colorBuffer);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+	glGenTextures(1, &m_lbuffer.colorTexture);
+	glBindTexture(GL_TEXTURE_2D, m_lbuffer.colorTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB8, windowWidth, windowHeight);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGB8, windowWidth, windowHeight);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_lbuffer.colorBuffer);
+	glGenFramebuffers(1, &m_lbuffer.colorBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.colorBuffer);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.colorTexture, 0);
 
 	m_lbuffer.depth = m_gbuffer.depth;
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, m_lbuffer.depth, 0);
@@ -350,15 +373,8 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
 	RenderLBuffer(camera, aspect_ratio);
 
-	// blit the LBuffer to screen
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_lbuffer.frameBuffer);				// read from the LBuffer
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);									// draw to the screen
-
-	glBlitFramebuffer(
-		0, 0, viewport_size[2], viewport_size[3],
-		0, 0, viewport_size[2], viewport_size[3],
-		GL_COLOR_BUFFER_BIT, GL_NEAREST
-	);
+	// POST PROCESSING
+	PerformPostProcessing();
 }
 
 float GetMaterialIndexFromColor(
@@ -486,6 +502,23 @@ void MyView::RenderLBuffer(
 	DrawPointLights(camera, aspect_ratio);
 
 	glDisable(GL_STENCIL_TEST);
+}
+
+/*
+*	\brief Perform post processing on the lbuffer
+*/
+void MyView::PerformPostProcessing()
+{
+	// Set our shader to use to the postprocessing shader
+	const Shader *const postprocessing = m_shader["postprocessing"];
+	glUseProgram(postprocessing->GetProgram());
+	
+	//m_lbuffer.frameBuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUniform1i(glGetUniformLocation(postprocessing->GetProgram(), "sampler_pixel"), 0);
+
+	glBindVertexArray(m_meshQuad.getVAO());
+	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
 }
 
 /*
