@@ -56,7 +56,7 @@ void MyView::reloadShaders()
 		m_shader["ambiant"] = ambiant;
 	}	
 
-	// Create a pointlight shader
+	// Create an ambient shader
 	Shader *const pointlight = new Shader();
 	if (!pointlight->Load("shaders/pointlight_vs.glsl", "shaders/pointlight_fs.glsl")) 
 	{
@@ -145,30 +145,26 @@ void MyView::CreateGBuffer(
 
 	// setup colour buffers
 	for (unsigned int textureIndex = 0; textureIndex < GBufferTexture::noof; ++textureIndex) {
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[textureIndex]);
-		//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
-		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB32F, windowWidth, windowHeight, GL_TRUE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[textureIndex], 0);
+		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
 		drawBufs[textureIndex] = GL_COLOR_ATTACHMENT0 + textureIndex;
 	}
 
 	// setup depth
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.depth);
-	//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, GL_TRUE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.depth, 0);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
 
 	glDrawBuffers(GBufferTexture::noof, drawBufs);
 
-	const GLenum errorCode = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if(errorCode != GL_FRAMEBUFFER_COMPLETE)
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "Failed to create GBuffer!" << std::endl;
 		return;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_MULTISAMPLE);
 }
 
 /*
@@ -182,19 +178,18 @@ void MyView::CreateLBuffer(
 	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 
-	glGenTextures(1, &m_lbuffer.colorTexture);
-	glBindTexture(GL_TEXTURE_2D, m_lbuffer.colorTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glGenTextures(1, &m_lbuffer.texture);
+	glBindTexture(GL_TEXTURE_2D, m_lbuffer.texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glGenFramebuffers(1, &m_lbuffer.colorBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.colorBuffer);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.colorTexture, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.texture, 0);
 
 	m_lbuffer.depth = m_gbuffer.depth;
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, m_lbuffer.depth, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_lbuffer.depth, 0);
 
-	const GLenum errorCode = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (errorCode != GL_FRAMEBUFFER_COMPLETE) {
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
 	}
 
@@ -351,7 +346,7 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 	glDeleteTextures(GBufferTexture::noof, m_gbuffer.texture);
 	glDeleteTextures(1, &m_gbuffer.depth);
 
-	glDeleteRenderbuffers(1, &m_lbuffer.colorBuffer);
+	glDeleteTextures(1, &m_lbuffer.texture);
 
 	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
 	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
@@ -468,7 +463,7 @@ void MyView::RenderGBuffer(
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), GetMaterialIndexFromColor(mat.colour));
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
 
-		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "TIME"), time + modelIndex);
+		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "TIME"), static_cast<float>(time + modelIndex));
 
 		// draw the mesh
 		mesh.Draw();		
@@ -509,16 +504,30 @@ void MyView::RenderLBuffer(
 */
 void MyView::PerformPostProcessing()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Clear the screen
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
 	// Set our shader to use to the postprocessing shader
 	const Shader *const postprocessing = m_shader["postprocessing"];
 	glUseProgram(postprocessing->GetProgram());
 	
-	//m_lbuffer.frameBuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_lbuffer.texture);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glUniform1i(glGetUniformLocation(postprocessing->GetProgram(), "sampler_pixel"), 0);
 
 	glBindVertexArray(m_meshQuad.getVAO());
 	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+
+	// Bind to nothing
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(0);
+	glBindVertexArray(0);
 }
 
 /*
@@ -530,30 +539,30 @@ void MyView::BindGBufferTextures(
 {
 	// Pass in our gbuffer position texture
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_gbuffer.texture[GBufferTexture::position]);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[GBufferTexture::position]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_position"), 0);
 
 	// Pass in our gbuffer normal texture
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::normal]);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::normal]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_normal"), 1);
 
 	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::material]);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_material_info"), 2);
 
-	// Pass in our gbuffer tangent information texture
+	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,  m_gbuffer.texture[GBufferTexture::tangents]);
+	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::tangents]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_tangent"), 3);
 
-	// 
+	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.diffuse);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_diffuse"), 4);
 
-	// 
+	// Pass in our gbuffer material information texture
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.normal);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_normal"), 5);
