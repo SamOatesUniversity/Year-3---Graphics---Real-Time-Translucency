@@ -15,6 +15,8 @@
 namespace tyga
 {
 
+	bool Window::m_closed = false;
+
 std::shared_ptr<Window> Window::main_window_;
 
 Window::GamepadState Window::gamepad_state_[Window::MAX_GAMEPADS];
@@ -128,6 +130,8 @@ open(int width,
         controller_->windowControlWillStart(shared_from_this());
     }
 
+	m_closed = false;
+
     return true;
 }
 
@@ -152,8 +156,12 @@ update()
         glClearColor(0.25f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
-    glfwSwapBuffers();
-    pollGamepads();
+
+	glfwSwapBuffers();
+
+	if (!m_closed) {
+		pollGamepads();
+	}
 }
 
 void Window::
@@ -204,6 +212,7 @@ onResize(int width,
 int Window::
 onClose()
 {
+	m_closed = true;
     // NB: GLFW limitation limits operation to a single window
     Window* window = main_window_.get();
     if (window != nullptr) {

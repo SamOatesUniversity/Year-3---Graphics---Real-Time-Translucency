@@ -34,8 +34,7 @@ void MyView::reloadShaders()
 	}
 	m_shader.clear();
 
-	ProFy::TimerID shaderLoadTimer;
-	ProFy::GetInstance().CreateTimer(shaderLoadTimer, ProFy::TimerType::CPU, "Shader Load Time", true);
+	ProFy::GetInstance().StartTimer(m_timer[Timer::ShaderLoadtime]);
 
 	// Create an ambient shader
 	Shader *const ambiant = new Shader();
@@ -129,8 +128,7 @@ void MyView::reloadShaders()
 		m_shader["postprocessing"] = postprocessing;
 	}
 
-	ProFy::GetInstance().EndTimer(shaderLoadTimer);
-	ProFy::GetInstance().OutputTimer(shaderLoadTimer);
+	ProFy::GetInstance().EndTimer(m_timer[Timer::ShaderLoadtime]);
 }
 
 /*
@@ -206,6 +204,8 @@ void MyView::CreateLBuffer(
 void MyView::
 windowViewWillStart(std::shared_ptr<tyga::Window> window)
 {
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
+
     assert(scene_ != nullptr);
 
 	reloadShaders();
@@ -356,6 +356,8 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 
 	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
 	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
+
+	ProFy::GetInstance().OutputTimer(m_timer[Timer::ShaderLoadtime], true);
 }
 
 void MyView::
@@ -376,6 +378,17 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	// POST PROCESSING
 	PerformPostProcessing();
+		
+	// Bind to nothing
+	for (unsigned int textureIndex = 0; textureIndex < 6; ++textureIndex)
+	{
+		glActiveTexture(GL_TEXTURE0 + textureIndex);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(0);
+	glBindVertexArray(0);
 }
 
 float GetMaterialIndexFromColor(
@@ -528,12 +541,6 @@ void MyView::PerformPostProcessing()
 
 	glBindVertexArray(m_meshQuad.getVAO());
 	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
-
-	// Bind to nothing
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glUseProgram(0);
-	glBindVertexArray(0);
 }
 
 /*
