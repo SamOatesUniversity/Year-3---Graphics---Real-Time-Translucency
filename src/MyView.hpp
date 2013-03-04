@@ -125,4 +125,14 @@ private:
 		GLuint normal;
 	} m_brickTexture;
 
+
+	struct Timer {
+		enum Enum {
+			ShaderLoadtime,
+			Noof
+		};
+	};
+
+	ProFy::TimerID								m_timer[Timer::Noof];
+
 };

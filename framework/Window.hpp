@@ -160,6 +160,8 @@ private:
     static GamepadState gamepad_state_[MAX_GAMEPADS];
     std::shared_ptr<WindowViewDelegate> view_;
     std::shared_ptr<WindowControlDelegate> controller_;
+
+	static bool m_closed;
 };
 
 } // end namespace tyga

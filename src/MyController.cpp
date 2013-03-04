@@ -99,6 +99,15 @@ windowControlKeyboardChanged(std::shared_ptr<tyga::Window> window,
     case 'S':
         camera_move_key_[3] = down;
         break;
+	case 262:
+		if (down) {
+			system("cls");
+			std::cout << "----------------------------------" << "\n";
+			std::cout << "||	Reloading Shaders	||" << "\n";
+			std::cout << "----------------------------------" << "\n\n";
+			view_->reloadShaders();
+		}
+		break;
     }
 
     const float key_speed = 100.f;
