@@ -107,8 +107,7 @@ private:
 
 	struct {
 		GLuint frameBuffer;
-		GLuint colorBuffer;
-		GLuint colorTexture;
+		GLuint texture;
 		GLuint depth;
 	} m_lbuffer;
 

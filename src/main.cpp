@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     const int window_width = 1024;
     const int window_height = 576;
-    const int number_of_samples = 0;
+    const int number_of_samples = 1;
 
     if (window->open(window_width, window_height, number_of_samples, true)) {
         while (window->isVisible()) {
