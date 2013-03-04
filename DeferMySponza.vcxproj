@@ -49,8 +49,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>.\framework;.\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\framework;.\include;..\ProFy\ProFy\src;$(IncludePath)</IncludePath>
+    <LibraryPath>.\lib;..\ProFy\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -68,7 +68,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-sg.lib;png-vc110-mt-sg.lib;zlib-vc110-mt-sg.lib;tcf-vc110-mt-sg.lib;tsl-vc110-mt-sg.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-sg.lib;png-vc110-mt-sg.lib;zlib-vc110-mt-sg.lib;tcf-vc110-mt-sg.lib;tsl-vc110-mt-sg.lib;ProFy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "$(SolutionDir)$(TargetFileName)"</Command>
