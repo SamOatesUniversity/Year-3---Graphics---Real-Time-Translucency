@@ -1,5 +1,7 @@
 #pragma once
 
+#include <profy.h>
+
 #include "WindowViewDelegate.hpp"
 #include "MyScene.hpp"
 #include "tgl.h"

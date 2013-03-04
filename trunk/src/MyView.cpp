@@ -34,6 +34,9 @@ void MyView::reloadShaders()
 	}
 	m_shader.clear();
 
+	ProFy::TimerID shaderLoadTimer;
+	ProFy::GetInstance().CreateTimer(shaderLoadTimer, ProFy::TimerType::CPU, "Shader Load Time", true);
+
 	// Create an ambient shader
 	Shader *const ambiant = new Shader();
 	if (!ambiant->Load("shaders/ambient_vs.glsl", "shaders/ambient_fs.glsl")) 
@@ -125,6 +128,9 @@ void MyView::reloadShaders()
 
 		m_shader["postprocessing"] = postprocessing;
 	}
+
+	ProFy::GetInstance().EndTimer(shaderLoadTimer);
+	ProFy::GetInstance().OutputTimer(shaderLoadTimer);
 }
 
 /*
