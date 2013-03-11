@@ -124,5 +124,8 @@
     <None Include="shaders\antialiasing\edge-detetion.fs">
       <Filter>Shader Files\antialiasing</Filter>
     </None>
+    <None Include="shaders\antialiasing\SMAA.fs">
+      <Filter>Shader Files\antialiasing</Filter>
+    </None>
   </ItemGroup>
 </Project>
