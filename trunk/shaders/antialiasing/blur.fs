@@ -27,7 +27,7 @@ vec3 edgeBlur( sampler2D sampler_pixel, ivec2 pixel_coord, int kernal)
 		return texelFetch(sampler_pixel, pixel_coord, 0).rgb;
 	}
 
-	vec3 pixel_colour;
+	vec3 pixel_colour = vec3(0, 0, 0);
 	int noofSamples = 0;
 	
 	for (int x = -kernal; x <= kernal; ++x)

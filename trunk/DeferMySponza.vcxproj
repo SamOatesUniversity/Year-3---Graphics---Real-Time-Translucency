@@ -68,7 +68,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-sg.lib;png-vc110-mt-sg.lib;zlib-vc110-mt-sg.lib;tcf-vc110-mt-sg.lib;tsl-vc110-mt-sg.lib;ProFy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-sg.lib;png-vc110-mt-sg.lib;zlib-vc110-mt-sg.lib;tcf-vc110-mt-sg.lib;tsl-vc110-mt-sg.lib;ProFy Static.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
