@@ -58,7 +58,8 @@ void main(void)
 
 	vec3 lighting = PointLight(worldPosition, worldNormal, pointlight_position, materialColor, 1.0f, pointlight_range);
 
-	if (materialInfo.z > 0.05f && materialInfo.z < 0.15f)
+	bool usetextures = true;
+	if (usetextures && (materialInfo.z > 0.05f && materialInfo.z < 0.15f))
 	{
 		vec3 lightLength = pointlight_position - worldPosition;
 		vec3 diffuesTexture = texture(sampler_brick_diffuse, materialInfo.xy).rgb;
