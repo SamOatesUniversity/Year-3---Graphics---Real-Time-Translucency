@@ -452,9 +452,6 @@ void MyView::RenderGBuffer(
 	glDepthFunc(GL_LESS); 
 	glDepthMask(GL_TRUE);
 
-	// disable blending
-	glDisable(GL_BLEND);
-
 	// Set our shader to use to the gbuffer shader
 	const Shader *const gbuffer = m_shader["gbuffer"];
 	glUseProgram(gbuffer->GetProgram());
@@ -488,6 +485,10 @@ void MyView::RenderGBuffer(
 		mesh.Draw();		
 	}
 
+	// disable depth testing
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+
 	// Bind back to default framebuffer for safety (always use protection kids)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -513,7 +514,7 @@ void MyView::RenderLBuffer(
 	DrawDirectionalLight(camera);
 
 	// Draw the point lights in the scene
-	DrawPointLights(camera, aspect_ratio);
+	//DrawPointLights(camera, aspect_ratio);
 
 	glDisable(GL_STENCIL_TEST);
 }
@@ -526,7 +527,7 @@ void MyView::PerformPostProcessing()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Clear the screen
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// Set our shader to use to the postprocessing shader
@@ -643,10 +644,6 @@ void MyView::DrawPointLights(
 	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
 
-	// disable depth testing
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
-
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
@@ -669,6 +666,7 @@ void MyView::DrawPointLights(
 	}
 
 	glCullFace(GL_BACK);
+	glDisable(GL_BLEND);
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
