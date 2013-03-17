@@ -44,7 +44,7 @@ void main(void)
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 1.0f);
+	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 0.0f);
 	
 	bool usetextures = false;
 	if (usetextures && (materialInfo.z > 0.05f && materialInfo.z < 0.15f))

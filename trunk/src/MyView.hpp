@@ -67,6 +67,12 @@ private:
 													int windowHeight
 												);
 
+												//! Create the Shadow Buffer
+	void										CreateShadowBuffer(
+													int windowWidth,
+													int windowHeight
+												);
+
 												//! Render the scene to the GBuffer
 	void										RenderGBuffer(
 													const MyScene::Camera &camera,					//!< The camera of which we want to render from
@@ -93,6 +99,12 @@ private:
 													const float &aspect_ratio						//!< The aspect ratio of the window
 												);
 
+												//! Draw the scenes spot lights to the lbuffer
+	void										DrawSpotLights(
+													const MyScene::Camera &camera,					//!< The camera of which we want to render from
+													const float &aspect_ratio						//!< The aspect ratio of the window
+												);
+
 												//! Bind all the gbuffer textures to a shader sampler
 	void										BindGBufferTextures(
 													const Shader *const shader						//!< A pointer to the shader of the samplers to bind
@@ -111,7 +123,14 @@ private:
 		GLuint frameBuffer;
 		GLuint texture;
 		GLuint depth;
+		glm::vec2 size;
 	} m_lbuffer;
+
+	struct {
+		GLuint frameBuffer;
+		GLuint texture;
+		glm::vec2 size;
+	} m_shadowbuffer;
 
     std::shared_ptr<const MyScene> scene_;
 
@@ -119,6 +138,7 @@ private:
 	std::vector<Mesh>							m_meshes;				//!<
 	Mesh										m_meshQuad;				//!< 
 	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
+	Mesh										m_coneMesh;				//!< The mesh that represents a cone lights volume
 
 	struct {
 		GLuint diffuse;
