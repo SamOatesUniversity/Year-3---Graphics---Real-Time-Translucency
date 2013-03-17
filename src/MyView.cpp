@@ -11,6 +11,7 @@ MyView()
 {
 	m_gbuffer.frameBuffer = NULL;
 	m_lbuffer.frameBuffer = NULL;
+	m_shadowbuffer.frameBuffer = NULL;
 }
 
 MyView::
@@ -58,7 +59,7 @@ void MyView::reloadShaders()
 		m_shader["ambiant"] = ambiant;
 	}	
 
-	// Create an ambient shader
+	// Create a pointlight shader
 	Shader *const pointlight = new Shader();
 	if (!pointlight->Load("shaders/pointlight_vs.glsl", "shaders/pointlight_fs.glsl")) 
 	{
@@ -80,6 +81,27 @@ void MyView::reloadShaders()
 		m_shader["pointlight"] = pointlight;
 	}
 
+	// Create a spotlight shader
+	Shader *const spotlight = new Shader();
+	if (!spotlight->Load("shaders/spotlight_vs.glsl", "shaders/spotlight_fs.glsl")) 
+	{
+		std::cout << "Failed to load the spotlight shader!" << std::endl;
+		system("PAUSE");
+	}
+	else
+	{
+		glAttachShader(spotlight->GetProgram(), spotlight->GetVertexShader());
+		glBindAttribLocation(spotlight->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(spotlight->GetProgram(), spotlight->GetFragmentShader());
+		glBindFragDataLocation(spotlight->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(spotlight->GetProgram());
+
+		std::cout << "Loaded spotlight shader..." << std::endl;
+
+		m_shader["spotlight"] = spotlight;
+	}
 
 	// Create the shader which will output the world position and normal to the gbuffer
 	Shader *const gbuffer = new Shader();
@@ -187,6 +209,9 @@ void MyView::CreateLBuffer(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	m_lbuffer.size.x = windowWidth;
+	m_lbuffer.size.y = windowHeight;
+
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.texture, 0);
 
@@ -200,6 +225,33 @@ void MyView::CreateLBuffer(
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindRenderbuffer(GL_RENDERBUFFER,0);	
 }
+
+
+void MyView::CreateShadowBuffer( 
+		int windowWidth, 
+		int windowHeight 
+	)
+{
+	glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+
+	glGenTextures(1, &m_shadowbuffer.texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
+
+	m_shadowbuffer.size.x = windowWidth;
+	m_shadowbuffer.size.y = windowHeight;
+
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture, 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindRenderbuffer(GL_RENDERBUFFER,0);	
+}
+
 
 void MyView::
 windowViewWillStart(std::shared_ptr<tyga::Window> window)
@@ -276,6 +328,57 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		m_sphereMesh.Create(mesh.vertex_array.size(), mesh.index_array.size());
 	}
 
+	// create a cone to represent spotlights
+	{
+		tsl::IndexedMesh mesh;
+		tsl::CreateCone(1.0f, 1.0f, 12, &mesh);
+		tsl::ConvertPolygonsToTriangles(&mesh);
+
+		glGenBuffers(1, &m_coneMesh.getVertexVBO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_coneMesh.getVertexVBO());
+
+		std::vector<tsl::Vector3> nonStupidConeVertexArray;
+		for (tsl::Vector3 vertex : mesh.vertex_array)
+		{
+			vertex.z = 1.0f - vertex.z;
+			nonStupidConeVertexArray.push_back(vertex);
+		}
+
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			nonStupidConeVertexArray.size() * sizeof(tsl::Vector3),
+			nonStupidConeVertexArray.data(),
+			GL_STATIC_DRAW
+			);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glGenBuffers(1, &m_coneMesh.getElementVBO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_coneMesh.getElementVBO());
+		glBufferData(
+			GL_ELEMENT_ARRAY_BUFFER,
+			mesh.index_array.size() * sizeof(unsigned int),
+			mesh.index_array.data(),
+			GL_STATIC_DRAW
+			);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		glGenVertexArrays(1, &m_coneMesh.getVAO());
+		glBindVertexArray(m_coneMesh.getVAO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_coneMesh.getElementVBO());
+		glBindBuffer(GL_ARRAY_BUFFER, m_coneMesh.getVertexVBO());
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(
+			0, 3, 
+			GL_FLOAT, GL_FALSE,
+			sizeof(glm::vec3), 0
+			);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		m_coneMesh.Create(mesh.vertex_array.size(), mesh.index_array.size());
+	}
+
 	// Load the scene
 	const int noofMeshes = scene_->meshCount();
 	for (int meshIndex = 0; meshIndex < noofMeshes; ++meshIndex)
@@ -335,6 +438,7 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
     glViewport(0, 0, width, height);
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
+	CreateShadowBuffer(256, 256);
 }
 
 void MyView::
@@ -516,6 +620,9 @@ void MyView::RenderLBuffer(
 	// Draw the point lights in the scene
 	//DrawPointLights(camera, aspect_ratio);
 
+	// Draw the point lights in the scene
+	DrawSpotLights(camera, aspect_ratio);
+
 	glDisable(GL_STENCIL_TEST);
 }
 
@@ -667,6 +774,148 @@ void MyView::DrawPointLights(
 
 	glCullFace(GL_BACK);
 	glDisable(GL_BLEND);
+
+	// Bind back to default for safety
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+/*
+*	\brief Draw the scenes spot lights to the lbuffer
+*/
+void MyView::DrawSpotLights( 
+	const MyScene::Camera &camera,							//!< The camera of which we want to render from
+	const float &aspect_ratio								//!< The aspect ratio of the window
+	)
+{
+	// Get the projection matrix
+	const glm::mat4 projection_xform = glm::perspective(
+		camera.vertical_field_of_view_degrees,
+		aspect_ratio,
+		camera.near_plane_distance,
+		camera.far_plane_distance
+		);
+
+	// get the view matrix
+	const glm::mat4 view_xform = glm::lookAt(
+		camera.position,
+		camera.position + camera.direction,
+		scene_->upDirection()
+		);
+
+	const Shader *const spotlight = m_shader["spotlight"];
+	glUseProgram(spotlight->GetProgram());
+
+	//for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		////////////////////////////////////////////////////////
+		//const MyScene::Light light = scene_->light(lightIndex);
+
+		struct {
+			glm::vec3 position;
+			glm::vec3 direction;
+			float cone_angle;
+			float range;
+		} light;
+
+		light.position = glm::vec3(0.0f, 50.0f, 0.0f);
+		light.direction = glm::vec3(1.0f, 0.0f, 0.0f);
+		light.range = 150.0f;
+		light.cone_angle = 15.0f;
+
+		// Create a world matrix for the light mesh
+		glm::mat4 xform;
+		xform = glm::translate(xform, light.position);
+
+		static float moo = 0;
+		moo += 0.0f;
+		xform = glm::rotate(xform, 90.0f + moo, scene_->upDirection());
+
+		xform = glm::scale(xform, glm::vec3(light.cone_angle * 10, light.cone_angle * 10, light.range));
+
+		////////////////////////////////////////////////////////
+
+		// Get the projection matrix
+		const glm::mat4 light_projection_xform = glm::perspective(
+			camera.vertical_field_of_view_degrees,
+			aspect_ratio,
+			camera.near_plane_distance,
+			camera.far_plane_distance
+			);
+
+		// get the view matrix
+		const glm::mat4 light_view_xform = glm::lookAt(
+			camera.position,
+			camera.position + camera.direction,
+			scene_->upDirection()
+			);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+		glViewport( 0, 0, ( GLint )m_shadowbuffer.size.x, ( GLint )m_shadowbuffer.size.y );
+
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		BindGBufferTextures(spotlight);
+
+		// Instantiate our uniforms
+		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "shadow_pass"), 0);	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
+
+		// enable blending so we don't nuke our directional light pass
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE); 
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
+
+		// set the current point lights data
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.cone_angle);	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
+
+		// draw to the lbuffer
+		m_coneMesh.Draw();
+
+		///////////////////////////////////////////////////////
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
+		glViewport( 0, 0, ( GLint )m_lbuffer.size.x, ( GLint )m_lbuffer.size.y );
+
+		BindGBufferTextures(spotlight);
+
+		// Instantiate our uniforms
+		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "shadow_pass"), 0);	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
+
+		// enable blending so we don't nuke our directional light pass
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE); 
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
+		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
+
+		// set the current point lights data
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.cone_angle);	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
+		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
+
+		// draw to the lbuffer
+		m_coneMesh.Draw();
+
+		glDisable(GL_BLEND);
+	}	
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
