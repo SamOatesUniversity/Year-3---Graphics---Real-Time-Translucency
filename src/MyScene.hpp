@@ -52,6 +52,9 @@ public:
     {
         glm::vec3 position;
         float range;
+        glm::vec3 direction;
+        float field_of_view_degrees;
+        bool casts_shadows;
     };
 
     int
@@ -64,6 +67,7 @@ public:
     {
         glm::vec3 colour;
         float shininess;
+        float translucency;
     };
 
     int
@@ -79,6 +83,7 @@ public:
         std::vector<glm::vec3> tangent_array;
         std::vector<glm::vec2> texcoord_array;
         std::vector<unsigned int> element_array;
+        std::vector<unsigned int> instance_array;
     };
 
     int
