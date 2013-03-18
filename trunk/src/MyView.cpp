@@ -209,8 +209,8 @@ void MyView::CreateLBuffer(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	m_lbuffer.size.x = windowWidth;
-	m_lbuffer.size.y = windowHeight;
+	m_lbuffer.size.x = static_cast<float>(windowWidth);
+	m_lbuffer.size.y = static_cast<float>(windowHeight);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.texture, 0);
@@ -238,8 +238,8 @@ void MyView::CreateShadowBuffer(
 	glGenTextures(1, &m_shadowbuffer.texture);
 	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
 
-	m_shadowbuffer.size.x = windowWidth;
-	m_shadowbuffer.size.y = windowHeight;
+	m_shadowbuffer.size.x = static_cast<float>(windowWidth);
+	m_shadowbuffer.size.y = static_cast<float>(windowHeight);
 
 	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture, 0);
@@ -392,8 +392,8 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		{
 			vertices[vertexIndex].position = sceneMesh.position_array[vertexIndex];
 			vertices[vertexIndex].normal = sceneMesh.normal_array[vertexIndex];
-			vertices[vertexIndex].tangent = sceneMesh.tangent_array[vertexIndex];
-			vertices[vertexIndex].texcoord = sceneMesh.texcoord_array[vertexIndex];
+			if (sceneMesh.tangent_array.size() > 0 ) vertices[vertexIndex].tangent = sceneMesh.tangent_array[vertexIndex];
+			if (sceneMesh.texcoord_array.size() > 0 ) vertices[vertexIndex].texcoord = sceneMesh.texcoord_array[vertexIndex];
 		}
 
 		// populate elements (index) array
@@ -806,32 +806,22 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	glUseProgram(spotlight->GetProgram());
 
-	//for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	for (int lightIndex = 0; lightIndex < /*scene_->lightCount()*/ 1; ++lightIndex)
 	{
 		////////////////////////////////////////////////////////
-		//const MyScene::Light light = scene_->light(lightIndex);
-
-		struct {
-			glm::vec3 position;
-			glm::vec3 direction;
-			float cone_angle;
-			float range;
-		} light;
-
-		light.position = glm::vec3(0.0f, 50.0f, 0.0f);
-		light.direction = glm::vec3(1.0f, 0.0f, 0.0f);
-		light.range = 150.0f;
-		light.cone_angle = 15.0f;
+		const MyScene::Light light = scene_->light(lightIndex);
 
 		// Create a world matrix for the light mesh
 		glm::mat4 xform;
-		xform = glm::translate(xform, light.position);
+		glm::vec3 left = glm::normalize(glm::cross(light.direction, scene_->upDirection()));
+		glm::vec3 up = glm::normalize(glm::cross(left, light.direction));
 
-		static float moo = 0;
-		moo += 0.0f;
-		xform = glm::rotate(xform, 90.0f + moo, scene_->upDirection());
+		xform[0][0] = left.x;				xform[0][1] = left.y;				xform[0][2] = left.z;				xform[0][3] = 0;
+		xform[1][0] = up.x;					xform[1][1] = up.y;					xform[1][2] = up.z;					xform[2][3] = 0;
+		xform[2][0] = light.direction.x;	xform[2][1] = light.direction.y;	xform[2][2] = light.direction.z;	xform[1][3] = 0;
+		xform[3][0] = light.position.x;		xform[3][1] = light.position.y;		xform[3][2] = light.position.z;		xform[3][3] = 1;
 
-		xform = glm::scale(xform, glm::vec3(light.cone_angle * 10, light.cone_angle * 10, light.range));
+		xform = glm::scale(xform, glm::vec3(light.range, light.range, light.range));
 
 		////////////////////////////////////////////////////////
 
@@ -875,7 +865,7 @@ void MyView::DrawSpotLights(
 
 		// set the current point lights data
 		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.cone_angle);	
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.field_of_view_degrees * 0.017f);	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
 
@@ -907,7 +897,7 @@ void MyView::DrawSpotLights(
 
 		// set the current point lights data
 		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.cone_angle);	
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.field_of_view_degrees * 0.017f);	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
 

@@ -9,8 +9,9 @@ MyScene()
     start_time_ = std::chrono::system_clock::now();
     time_seconds_ = 0.f;
 
-    if (!readFile("assets/sponza.tcf")) {
-        std::cerr << "Failed to read sponza.tcf data file" << std::endl;
+    if (!readFile("assets/sponza_with_friends.tcf")) {
+        std::cerr << "Failed to read sponza_with_friends.tcf data file"
+                  << std::endl;
     }
 
     camera_.reset(new FirstPersonMovement());
@@ -53,28 +54,36 @@ readFile(std::string filepath)
 
     meshes_.reserve(tcf_scene.meshArray.size());
     for (const auto& mesh : tcf_scene.meshArray) {
+        Mesh new_mesh;
+        new_mesh.instance_array.reserve(mesh.instanceArray.size());
         models_.reserve(models_.size() + mesh.instanceArray.size());
         for (const auto& model : mesh.instanceArray) {
             Model new_model;
             new_model.mesh_index = meshes_.size();
-            new_model.material_index = 0;
+			new_model.material_index = 0;
             new_model.xform = glm::mat4x3(model.m00, model.m01, model.m02,
                                           model.m10, model.m11, model.m12,
                                           model.m20, model.m21, model.m22,
                                           model.m30, model.m31, model.m32);
+            new_mesh.instance_array.push_back(models_.size());
             models_.push_back(new_model);
         }
-        Mesh new_mesh;
         new_mesh.element_array.assign((unsigned int*)&mesh.indexArray.front(),
                                       (unsigned int*)&mesh.indexArray.back()+1);
         new_mesh.normal_array.assign((glm::vec3*)&mesh.normalArray.front(),
                                      (glm::vec3*)&mesh.normalArray.back()+1);
         new_mesh.position_array.assign((glm::vec3*)&mesh.vertexArray.front(),
                                        (glm::vec3*)&mesh.vertexArray.back()+1);
-        new_mesh.tangent_array.assign((glm::vec3*)&mesh.tangentArray.front(),
-                                      (glm::vec3*)&mesh.tangentArray.back()+1);
-        new_mesh.texcoord_array.assign((glm::vec2*)&mesh.texcoordArray.front(),
-                                      (glm::vec2*)&mesh.texcoordArray.back()+1);
+        if (!mesh.tangentArray.empty()) {
+            new_mesh.tangent_array.assign(
+                (glm::vec3*)&mesh.tangentArray.front(),
+                (glm::vec3*)&mesh.tangentArray.back()+1);
+        }
+        if (!mesh.texcoordArray.empty()) {
+            new_mesh.texcoord_array.assign(
+                (glm::vec2*)&mesh.texcoordArray.front(),
+                (glm::vec2*)&mesh.texcoordArray.back()+1);
+        }
         meshes_.push_back(new_mesh);
     }
 
@@ -84,22 +93,35 @@ readFile(std::string filepath)
     int greenShapes[] = { 8, 19, 31, 33, 54, 57, 67, 68, 66, 80 };
     int yellowShapes[] = { 4, 5, 6, 7, 23, 24, 25, 26, 27, 28, 29, 30, 44, 45,
                            46, 47, 48, 49, 50, 51, 52, 53 };
-    int *shapes[3] = { redShapes, greenShapes, yellowShapes };
+    int happyShapes[] = { 82 };
+    int bunnyShapes[] = { 81 };
+    int dragonShapes[] = { 83 };
+    int *shapes[6] = { redShapes, greenShapes, yellowShapes,
+                       happyShapes, bunnyShapes, dragonShapes };
     int numberOfShapes[] = { sizeof(redShapes) / sizeof(int),
                              sizeof(greenShapes) / sizeof(int),
-                             sizeof(yellowShapes) / sizeof(int) };
-    glm::vec3 colours[3] = { glm::vec3(1.f, 0.0f, 0.f),
+                             sizeof(yellowShapes) / sizeof(int),
+                             sizeof(happyShapes) / sizeof(int),
+                             sizeof(bunnyShapes) / sizeof(int),
+                             sizeof(dragonShapes) / sizeof(int) };
+    glm::vec3 colours[6] = { glm::vec3(1.f, 0.33f, 0.f),
                              glm::vec3(0.2f, 0.8f, 0.2f),
-                             glm::vec3(0.8f, 0.8f, 0.2f) };
-    float shininess[3] = { 0.f, 64.f, 128.f };
+                             glm::vec3(0.8f, 0.8f, 0.2f),
+                             glm::vec3(0.8f, 0.4f, 0.4f),
+                             glm::vec3(0.4f, 0.8f, 0.4f),
+                             glm::vec3(0.4f, 0.4f, 0.8f) };
+    float shininess[6] = { 0.f, 64.f, 128.f, 64.f, 0.f, 0.f };
+    float translucency[6] = { 1.f, 0.5f, 0.f, 1.f, 0.7f, 0.4f };
     Material new_material;
     new_material.colour = glm::vec3(0.8f, 0.8f, 0.8f);
     new_material.shininess = 0.f;
+    new_material.translucency = 0.f;
     materials_.push_back(new_material);
-    for (int j=0; j<3; ++j) {
+    for (int j=0; j<6; ++j) {
         Material new_material;
         new_material.colour = colours[j];
         new_material.shininess = shininess[j];
+        new_material.translucency = translucency[j];
         materials_.push_back(new_material);
         for (int i=0; i<numberOfShapes[j]; ++i) {
             int index = shapes[j][i];
@@ -159,21 +181,55 @@ camera() const
 int MyScene::
 lightCount() const
 {
-    return 7;
+    return 5;
 }
 
 MyScene::Light MyScene::
 light(int index) const
 {
     Light light;
-    if (index == 0) {
-        light.position = glm::vec3(50.f * cosf(time_seconds_), 50.f, 0.f);
-        light.range = 70.f;
-    } else {
-        float A = time_seconds_ + index * 6.28f / 6.f;
-        light.position  = glm::vec3(120.f * cosf(A), 10.f, 40.f * sinf(A));
-        light.range = 20.f;
+    const float t = time_seconds_;
+
+    switch (index) {
+    case 0:
+        light.position = glm::vec3(75.f, 110.f, -5.f + 15.f * cosf(t));
+        light.range = 300;
+        light.direction = glm::normalize(glm::vec3(-40.f, 0.f, -5.f)
+                                         - light.position);
+        light.field_of_view_degrees = 60.f;
+        light.casts_shadows = true;
+        break;
+    case 1:
+        light.position = glm::vec3(-75.f, 110.f, -5.f + 15.f * cosf(1+t));
+        light.range = 300;
+        light.direction = glm::normalize(glm::vec3(40.f, 0.f, -5.f)
+                                         - light.position);
+        light.field_of_view_degrees = 60.f;
+        light.casts_shadows = true;
+        break;
+    case 2:
+        light.position = glm::vec3(-97.75f, 8.34f, -5.25f + 3.f * cosf(3+t));
+        light.range = 100;
+        light.direction = glm::normalize(glm::vec3(0.97f, 0.26f, 0.f));
+        light.field_of_view_degrees = 90.f;
+        light.casts_shadows = false;
+        break;
+    case 3:
+        light.position = glm::vec3(-20.56f, 4.17f, 0.44f + 3.f * cosf(4+t));
+        light.range = 100;
+        light.direction = glm::normalize(glm::vec3(0.94f, 0.09f, -0.33f));
+        light.field_of_view_degrees = 90.f;
+        light.casts_shadows = false;
+        break;
+    case 4:
+        light.position = glm::vec3(37.88f, 3.36f, -10.53f + 3.f * cosf(3+t));
+        light.range = 100;
+        light.direction = glm::normalize(glm::vec3(0.84f, 0.37f, 0.42f));
+        light.field_of_view_degrees = 90.f;
+        light.casts_shadows = false;
+        break;
     }
+
     return light;
 }
 
