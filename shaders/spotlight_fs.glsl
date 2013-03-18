@@ -25,14 +25,10 @@ vec3 SpotLight(vec3 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
      
     vec3 N = worldNormal;
     vec3 L = normalize( lightlength );
-    float spotLight = -dot(L, direction);
- 
-    float falloff = spotLight - cos(cone * 0.5f);
-
-    float fatt = smoothstep(0.0f, 1.0f, falloff);
+    float spotLight = dot(-L, direction);
+	float fatt = smoothstep(0.0f, 1.0f, (spotLight - cos(cone * 0.5f)) * 100.0f);
 
     vec3 lighting = (spotLight > cos(cone)) ? colour * (clamp(dot(L, N), 0.0f, 1.0f) * fatt) : vec3(0.0f, 0.0f, 0.0f);
-
     return lighting;
 }
 
@@ -64,7 +60,7 @@ vec3 SpotLightPass()
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting = SpotLight(worldPosition, worldNormal, spotlight_position, spotlight_direction, 2, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
+	vec3 lighting = SpotLight(worldPosition, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.5f, spotlight_range, materialColor);
 	return lighting;
 }
 
