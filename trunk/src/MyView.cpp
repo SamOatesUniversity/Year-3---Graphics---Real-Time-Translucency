@@ -844,7 +844,7 @@ void MyView::DrawSpotLights(
 
 		// set the current point lights data
 		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.field_of_view_degrees * 0.017f);	
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), (light.field_of_view_degrees *0.5f) * 0.017f);	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
 
@@ -873,7 +873,7 @@ void MyView::DrawSpotLights(
 
 		// set the current point lights data
 		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), light.field_of_view_degrees * 0.017f);	
+		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), (light.field_of_view_degrees *0.5f) * 0.017f);	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
 		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
 

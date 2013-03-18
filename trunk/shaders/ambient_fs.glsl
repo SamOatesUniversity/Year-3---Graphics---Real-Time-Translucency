@@ -44,20 +44,6 @@ void main(void)
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 0.0f);
-	
-	bool usetextures = false;
-	if (usetextures && (materialInfo.z > 0.05f && materialInfo.z < 0.15f))
-	{
-		vec3 diffuesTexture = texture(sampler_brick_diffuse, materialInfo.xy).rgb;
-		vec3 normal = normalize(texture2D(sampler_brick_normal, materialInfo.xy).rgb * 2.0 - 1.0);
-		vec3 L = normalize(directional_light_direction);
-		float diffuse = max(dot(normal, L), 0.0); 
-
-		reflected_light = lighting * (diffuesTexture * diffuse);
-	}
-	else
-	{
-		reflected_light = lighting;
-	}
+	vec3 lighting =  DirectionalLight(worldNormal, directional_light_direction, materialColor, 0.4f);
+	reflected_light = lighting;
 }
