@@ -334,49 +334,28 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		tsl::CreateCone(1.0f, 1.0f, 12, &mesh);
 		tsl::ConvertPolygonsToTriangles(&mesh);
 
-		glGenBuffers(1, &m_coneMesh.getVertexVBO());
-		glBindBuffer(GL_ARRAY_BUFFER, m_coneMesh.getVertexVBO());
-
-		std::vector<tsl::Vector3> nonStupidConeVertexArray;
-		for (tsl::Vector3 vertex : mesh.vertex_array)
+		// populate the vertex array
+		const int noofVerticies = mesh.vertex_array.size();
+		Vertex *const vertices = new Vertex[noofVerticies];
+		for (int vertexIndex = 0; vertexIndex < noofVerticies; ++vertexIndex)
 		{
-			vertex.z = 1.0f - vertex.z;
-			nonStupidConeVertexArray.push_back(vertex);
+			vertices[vertexIndex].position = glm::vec3(mesh.vertex_array[vertexIndex].x, mesh.vertex_array[vertexIndex].y, 1.0f - mesh.vertex_array[vertexIndex].z);
+			vertices[vertexIndex].normal = glm::vec3(mesh.normal_array[vertexIndex].x * -1.0f, mesh.normal_array[vertexIndex].y * -1.0f, mesh.normal_array[vertexIndex].z * -1.0f);
 		}
 
-		glBufferData(
-			GL_ARRAY_BUFFER,
-			nonStupidConeVertexArray.size() * sizeof(tsl::Vector3),
-			nonStupidConeVertexArray.data(),
-			GL_STATIC_DRAW
-			);
+		// populate elements (index) array
+		const unsigned int noofElements = mesh.index_array.size();
+		unsigned int *const elements = new unsigned int[noofElements];
+		for (unsigned int elementIndex = 0; elementIndex < noofElements; ++elementIndex) 
+		{
+			elements[elementIndex] = mesh.index_array[elementIndex];
+		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		// make our new mesh
+		m_coneMesh.Create(vertices, noofVerticies, elements, noofElements);
 
-		glGenBuffers(1, &m_coneMesh.getElementVBO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_coneMesh.getElementVBO());
-		glBufferData(
-			GL_ELEMENT_ARRAY_BUFFER,
-			mesh.index_array.size() * sizeof(unsigned int),
-			mesh.index_array.data(),
-			GL_STATIC_DRAW
-			);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		glGenVertexArrays(1, &m_coneMesh.getVAO());
-		glBindVertexArray(m_coneMesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_coneMesh.getElementVBO());
-		glBindBuffer(GL_ARRAY_BUFFER, m_coneMesh.getVertexVBO());
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(
-			0, 3, 
-			GL_FLOAT, GL_FALSE,
-			sizeof(glm::vec3), 0
-			);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-
-		m_coneMesh.Create(mesh.vertex_array.size(), mesh.index_array.size());
+		delete[] vertices;
+		delete[] elements;
 	}
 
 	// Load the scene
@@ -806,7 +785,10 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	glUseProgram(spotlight->GetProgram());
 
-	for (int lightIndex = 0; lightIndex < /*scene_->lightCount()*/ 1; ++lightIndex)
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
 	{
 		////////////////////////////////////////////////////////
 		const MyScene::Light light = scene_->light(lightIndex);
@@ -858,9 +840,6 @@ void MyView::DrawSpotLights(
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE); 
 
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
 		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
 
 		// set the current point lights data
@@ -890,9 +869,6 @@ void MyView::DrawSpotLights(
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE); 
 
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
 		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
 
 		// set the current point lights data
@@ -906,6 +882,8 @@ void MyView::DrawSpotLights(
 
 		glDisable(GL_BLEND);
 	}	
+
+	glCullFace(GL_BACK);
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
