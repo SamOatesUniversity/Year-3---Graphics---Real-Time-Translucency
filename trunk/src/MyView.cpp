@@ -793,8 +793,9 @@ void MyView::DrawSpotLights(
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
-	for (Light *light : m_light)
+	//for (Light *light : m_light)
 	{
+		Light *light = m_light[0];
 		light->CalculateWorldMatrix(scene_->upDirection());
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
@@ -816,7 +817,11 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		light->PerformLightPass(spotlight, view_xform, projection_xform, camera.position);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
+		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 6);
+
+		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();

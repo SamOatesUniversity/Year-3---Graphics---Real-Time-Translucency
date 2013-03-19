@@ -20,5 +20,5 @@ public:
 
 	void								PerformShadowPass(glm::vec3 sceneUp, const Shader *const shader);
 
-	void								PerformLightPass(const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position);
+	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position);
 };
