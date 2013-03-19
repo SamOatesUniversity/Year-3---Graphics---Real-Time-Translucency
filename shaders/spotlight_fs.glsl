@@ -5,6 +5,8 @@ uniform sampler2DRect sampler_world_normal;
 uniform sampler2DRect sampler_material_info;
 uniform sampler2DRect sampler_world_tangent;
 
+uniform sampler2DRect sampler_shadow_map;
+
 uniform sampler2D sampler_brick_diffuse;
 uniform sampler2D sampler_brick_normal;
 
@@ -13,8 +15,9 @@ uniform vec3 spotlight_position;
 uniform vec3 spotlight_direction;
 uniform float spotlight_coneangle;
 
-uniform int shadow_pass;
+uniform mat4 light_view_projection_xform;
 
+uniform int shadow_pass;
 uniform vec3 camera_position;
 
 out vec3 reflected_light;
@@ -64,15 +67,53 @@ vec3 SpotLightPass()
 	return lighting;
 }
 
+vec3 Shadow()
+{
+	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+	vec4 worldPosition = texelFetch(sampler_world_position, p);
+
+	vec4 hpos_from_light = light_view_projection_xform * worldPosition;
+    float light_to_point_depth = hpos_from_light.z / hpos_from_light.w;
+    vec2 shadow_texcoord = vec2( 0.5f + 0.5f * hpos_from_light.x / hpos_from_light.w, 0.5f - 0.5f * hpos_from_light.y / hpos_from_light.w );
+
+	int level_of_filtering = 1;
+	int kernal = 1;
+	int texture_size = 256;
+	float bias = 0.0001f;
+
+	float count = 0.0f;
+    float shadowing = 0.0f;
+    for( int x = -level_of_filtering; x <= level_of_filtering; x += kernal )
+	{
+        for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
+		{
+			vec2 fpoint = shadow_texcoord + vec2( x / texture_size, y / texture_size );
+            float light_to_first_hit_depth = texelFetch( sampler_shadow_map, ivec2(fpoint.x, fpoint.y)).x;
+            shadowing += (light_to_first_hit_depth+bias) < light_to_point_depth ? 0.0f : 1.0f;
+            count += 1.0f;
+        }
+
+	}
+
+	return vec3( shadowing / count, shadowing / count, shadowing / count );
+}
+
 vec3 SpotLightShadowPass()
 {
-	return vec3(1.0f, 0.0f, 0.0f);
+	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+	vec4 worldPosition = texelFetch(sampler_world_position, p);
+
+	float depth = worldPosition.z / worldPosition.w;
+
+	return vec3(depth, 0.0f, 0.0f);
 }
 
 void main(void)
 {
 	if (shadow_pass == 0) {
-		reflected_light = SpotLightPass();
+		vec3 spotLight = SpotLightPass();
+		vec3 shadowAttenuation = Shadow();
+		reflected_light = spotLight * shadowAttenuation;
 	} else {
 		reflected_light = SpotLightShadowPass();
 	}
