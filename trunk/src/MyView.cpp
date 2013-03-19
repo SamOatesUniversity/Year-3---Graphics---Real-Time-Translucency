@@ -256,6 +256,11 @@ void MyView::CreateShadowBuffer(
 void MyView::
 windowViewWillStart(std::shared_ptr<tyga::Window> window)
 {
+	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	{
+		m_light.push_back(new Light(scene_->light(lightIndex)));
+	}
+
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
 
     assert(scene_ != nullptr);
@@ -788,39 +793,9 @@ void MyView::DrawSpotLights(
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
-	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
+	for (Light *light : m_light)
 	{
-		////////////////////////////////////////////////////////
-		const MyScene::Light light = scene_->light(lightIndex);
-
-		// Create a world matrix for the light mesh
-		glm::mat4 xform;
-		glm::vec3 left = glm::normalize(glm::cross(light.direction, scene_->upDirection()));
-		glm::vec3 up = glm::normalize(glm::cross(left, light.direction));
-
-		xform[0][0] = left.x;				xform[0][1] = left.y;				xform[0][2] = left.z;				xform[0][3] = 0;
-		xform[1][0] = up.x;					xform[1][1] = up.y;					xform[1][2] = up.z;					xform[2][3] = 0;
-		xform[2][0] = light.direction.x;	xform[2][1] = light.direction.y;	xform[2][2] = light.direction.z;	xform[1][3] = 0;
-		xform[3][0] = light.position.x;		xform[3][1] = light.position.y;		xform[3][2] = light.position.z;		xform[3][3] = 1;
-
-		xform = glm::scale(xform, glm::vec3(light.range, light.range, light.range));
-
-		////////////////////////////////////////////////////////
-
-		// Get the projection matrix
-		const glm::mat4 light_projection_xform = glm::perspective(
-			camera.vertical_field_of_view_degrees,
-			aspect_ratio,
-			camera.near_plane_distance,
-			camera.far_plane_distance
-			);
-
-		// get the view matrix
-		const glm::mat4 light_view_xform = glm::lookAt(
-			camera.position,
-			camera.position + camera.direction,
-			scene_->upDirection()
-			);
+		light->CalculateWorldMatrix(scene_->upDirection());
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 		glViewport( 0, 0, ( GLint )m_shadowbuffer.size.x, ( GLint )m_shadowbuffer.size.y );
@@ -829,25 +804,8 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		// Instantiate our uniforms
-		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "shadow_pass"), 0);	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
-
-		// enable blending so we don't nuke our directional light pass
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_ONE, GL_ONE); 
-
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		// set the current point lights data
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), (light.field_of_view_degrees *0.5f) * 0.017f);	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
-
+		light->PerformShadowPass(scene_->upDirection(), spotlight);
+		
 		// draw to the lbuffer
 		m_coneMesh.Draw();
 
@@ -858,24 +816,7 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		// Instantiate our uniforms
-		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "shadow_pass"), 0);	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
-
-		// enable blending so we don't nuke our directional light pass
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_ONE, GL_ONE); 
-
-		glUniformMatrix4fv(glGetUniformLocation(spotlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		// set the current point lights data
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_range"), light.range);				
-		glUniform1f(glGetUniformLocation(spotlight->GetProgram(), "spotlight_coneangle"), (light.field_of_view_degrees *0.5f) * 0.017f);	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_position"), 1, glm::value_ptr(light.position));	
-		glUniform3fv(glGetUniformLocation(spotlight->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(light.direction));	
+		light->PerformLightPass(spotlight, view_xform, projection_xform, camera.position);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
