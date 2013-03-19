@@ -7,6 +7,7 @@
 #include "tgl.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "Light.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -139,6 +140,8 @@ private:
 	Mesh										m_meshQuad;				//!< 
 	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
 	Mesh										m_coneMesh;				//!< The mesh that represents a cone lights volume
+
+	std::vector<Light*>							m_light;
 
 	struct {
 		GLuint diffuse;

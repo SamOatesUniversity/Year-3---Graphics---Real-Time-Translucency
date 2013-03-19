@@ -106,6 +106,7 @@
     <ClInclude Include="framework\Window.hpp" />
     <ClInclude Include="framework\WindowControlDelegate.hpp" />
     <ClInclude Include="framework\WindowViewDelegate.hpp" />
+    <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\MyView.hpp" />
     <ClInclude Include="src\MyController.hpp" />
@@ -116,6 +117,7 @@
     <ClCompile Include="framework\FileHelper.cpp" />
     <ClCompile Include="framework\tgl.c" />
     <ClCompile Include="framework\Window.cpp" />
+    <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MyView.cpp" />
     <ClCompile Include="src\MyController.cpp" />
