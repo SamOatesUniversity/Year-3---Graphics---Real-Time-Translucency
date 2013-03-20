@@ -2,6 +2,7 @@
 
 #include "MyScene.hpp"
 #include "Shader.h"
+#include "Mesh.h"
 
 class Light {
 
@@ -20,7 +21,11 @@ public:
 										
 	void								CalculateWorldMatrix(glm::vec3 sceneUp);
 
-	void								PerformShadowPass( glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position );
+	void								PerformShadowPass(
+											const Shader *const shader, 
+											const MyScene::Model &model,
+											const Mesh &mesh
+										);
 
 	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position);
 

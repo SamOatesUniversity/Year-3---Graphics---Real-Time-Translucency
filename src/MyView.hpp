@@ -124,6 +124,7 @@ private:
 	struct {
 		GLuint frameBuffer;
 		GLuint texture;
+		GLuint depth;
 		glm::vec2 size;
 	} m_shadowbuffer;
 
