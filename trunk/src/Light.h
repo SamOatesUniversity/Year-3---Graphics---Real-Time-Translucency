@@ -13,7 +13,7 @@ private:
 public:
 
 										Light(
-											const MyScene::Light &light
+											MyScene::Light &light
 										);
 										
 	void								CalculateWorldMatrix(glm::vec3 sceneUp);
@@ -21,4 +21,8 @@ public:
 	void								PerformShadowPass(glm::vec3 sceneUp, const Shader *const shader);
 
 	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position);
+
+	void								Update(
+											const MyScene::Light &light
+										);
 };
