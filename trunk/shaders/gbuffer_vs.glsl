@@ -22,11 +22,6 @@ out vec4 material_info;
 void main(void)
 {
 	vec3 vpos = vertex_position;
-	if (materialIndex > 0.15f && materialIndex < 0.25f)
-	{
-		vpos.x = vpos.x - (cos(TIME * 0.0025f) * 0.5f);
-		vpos.z = vpos.z - (((sin(TIME * 0.01f) * 0.5f) + 1.0f) * 0.25f);
-	}
 
     gl_Position = worldMatrix * vec4(vpos, 1.0);
 	gl_Position = viewMatrix * gl_Position;

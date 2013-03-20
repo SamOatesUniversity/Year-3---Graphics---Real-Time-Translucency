@@ -103,6 +103,28 @@ void MyView::reloadShaders()
 		m_shader["spotlight"] = spotlight;
 	}
 
+	// Create a spotlight shadow shader
+	Shader *const spotlightShadow = new Shader();
+	if (!spotlightShadow->Load("shaders/spotlight_shadow_vs.glsl", "shaders/spotlight_shadow_fs.glsl")) 
+	{
+		std::cout << "Failed to load the spotlight shadow shader!" << std::endl;
+		system("PAUSE");
+	}
+	else
+	{
+		glAttachShader(spotlightShadow->GetProgram(), spotlightShadow->GetVertexShader());
+		glBindAttribLocation(spotlightShadow->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(spotlightShadow->GetProgram(), spotlightShadow->GetFragmentShader());
+		glBindFragDataLocation(spotlightShadow->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(spotlightShadow->GetProgram());
+
+		std::cout << "Loaded spotlight shadow shader..." << std::endl;
+
+		m_shader["spotlight_shadow"] = spotlightShadow;
+	}
+
 	// Create the shader which will output the world position and normal to the gbuffer
 	Shader *const gbuffer = new Shader();
 	if (!gbuffer->Load("shaders/gbuffer_vs.glsl", "shaders/gbuffer_fs.glsl"))
@@ -232,17 +254,29 @@ void MyView::CreateShadowBuffer(
 		int windowHeight 
 	)
 {
-	glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
-
-	glGenTextures(1, &m_shadowbuffer.texture);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
-
 	m_shadowbuffer.size.x = static_cast<float>(windowWidth);
 	m_shadowbuffer.size.y = static_cast<float>(windowHeight);
 
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB8, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	// frame buffer
+	glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+
+	// render texture
+	GLenum drawBufs[1];
+
+	glGenTextures(1, &m_shadowbuffer.texture);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, nullptr);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture, 0);
+	drawBufs[0] = GL_COLOR_ATTACHMENT0;
+
+	// setup depth
+	glGenTextures(1, &m_shadowbuffer.depth);
+	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.depth);
+	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_shadowbuffer.depth, 0);
+
+	glDrawBuffers(1, drawBufs);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
@@ -711,39 +745,62 @@ void MyView::DrawSpotLights(
 		);
 
 	const Shader *const spotlight = m_shader["spotlight"];
-	glUseProgram(spotlight->GetProgram());
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-
-	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
+	
+	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		//const int lightIndex = 0;
+		const int lightIndex = 0;
 		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 
 		light->CalculateWorldMatrix(scene_->upDirection());
 
-		//glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
-		//glViewport( 0, 0, ( GLint )m_shadowbuffer.size.x, ( GLint )m_shadowbuffer.size.y );
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+		glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
 
-		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		//glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		//light->PerformShadowPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
-		//
-		//// draw to the lbuffer
-		//m_coneMesh.Draw();
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, 1, ~0);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS); 
+		glDepthMask(GL_TRUE);
+
+		glUseProgram(spotlightShadow->GetProgram());
+						
+		// Draw all our models to the gbuffer
+		const int noofModels = scene_->modelCount();
+		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		{
+			const MyScene::Model model = scene_->model(modelIndex);
+			const Mesh mesh = m_meshes[model.mesh_index];
+
+			light->PerformShadowPass(spotlightShadow, model, mesh);
+
+			// draw the mesh
+			mesh.Draw();		
+		}
+
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+		
 		///////////////////////////////////////////////////////
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 		glViewport(0, 0, (GLint)m_lbuffer.size.x, (GLint)m_lbuffer.size.y);
 
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
 		// enable blending so we don't nuke our directional light pass
 		glEnable(GL_BLEND);
 		glBlendEquation(GL_FUNC_ADD);
 		glBlendFunc(GL_ONE, GL_ONE); 
+
+		glUseProgram(spotlight->GetProgram());
 
 		BindGBufferTextures(spotlight);
 
@@ -754,9 +811,9 @@ void MyView::DrawSpotLights(
 		
 		// disable blending
 		glDisable(GL_BLEND);
-	}	
-
-	glCullFace(GL_BACK);
+		glDisable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+	}		
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
