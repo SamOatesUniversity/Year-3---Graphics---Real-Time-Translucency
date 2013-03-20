@@ -422,7 +422,7 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
     glViewport(0, 0, width, height);
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
-	CreateShadowBuffer(256, 256);
+	CreateShadowBuffer(1024, 1024);
 }
 
 void MyView::
@@ -661,16 +661,6 @@ void MyView::BindGBufferTextures(
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::tangents]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_tangent"), 3);
-
-	// Pass in our gbuffer material information texture
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.diffuse);
-	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_diffuse"), 4);
-
-	// Pass in our gbuffer material information texture
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D,  m_brickTexture.normal);
-	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_brick_normal"), 5);
 }
 
 /*
@@ -695,73 +685,6 @@ void MyView::DrawDirectionalLight(
 
 	// Bind back to default for safety
 	glBindVertexArray(0);
-}
-
-/*
-*	\brief Draw the scenes point lights to the lbuffer
-*/
-void MyView::DrawPointLights( 
-		const MyScene::Camera &camera,							//!< The camera of which we want to render from
-		const float &aspect_ratio								//!< The aspect ratio of the window
-	)
-{
-	// Get the projection matrix
-	const glm::mat4 projection_xform = glm::perspective(
-		camera.vertical_field_of_view_degrees,
-		aspect_ratio,
-		camera.near_plane_distance,
-		camera.far_plane_distance
-	);
-
-	// get the view matrix
-	const glm::mat4 view_xform = glm::lookAt(
-		camera.position,
-		camera.position + camera.direction,
-		scene_->upDirection()
-	);
-
-	// enable blending so we don't nuke our directional light pass
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE); 
-
-	const Shader *const pointlight = m_shader["pointlight"];
-	glUseProgram(pointlight->GetProgram());
-
-	BindGBufferTextures(pointlight);
-
-	// Instantiate our uniforms
-	glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "camera_position"), 1, glm::value_ptr(camera.position));	
-	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-
-	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
-	{
-		const MyScene::Light light = scene_->light(lightIndex);
-
-		// Create a world matrix for the light mesh
-		glm::mat4 xform;
-		xform = glm::translate(xform, light.position);
-		xform = glm::scale(xform, glm::vec3(light.range));
-		glUniformMatrix4fv(glGetUniformLocation(pointlight->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);
-
-		// set the current point lights data
-		glUniform1f(glGetUniformLocation(pointlight->GetProgram(), "pointlight_range"), light.range);				
-		glUniform3fv(glGetUniformLocation(pointlight->GetProgram(), "pointlight_position"), 1, glm::value_ptr(light.position));	
-
-		// draw to the lbuffer
-		m_sphereMesh.Draw();
-	}
-
-	glCullFace(GL_BACK);
-	glDisable(GL_BLEND);
-
-	// Bind back to default for safety
-	glBindVertexArray(0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 /*
@@ -796,39 +719,40 @@ void MyView::DrawSpotLights(
 	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
 		//const int lightIndex = 0;
-		Light *light = m_light[lightIndex];
+		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 
 		light->CalculateWorldMatrix(scene_->upDirection());
 
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
-		glViewport( 0, 0, ( GLint )m_shadowbuffer.size.x, ( GLint )m_shadowbuffer.size.y );
+		//glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+		//glViewport( 0, 0, ( GLint )m_shadowbuffer.size.x, ( GLint )m_shadowbuffer.size.y );
 
-		glClear(GL_DEPTH_BUFFER_BIT);
+		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		//glClear(GL_COLOR_BUFFER_BIT);
 
-		BindGBufferTextures(spotlight);
-
-		light->PerformShadowPass(scene_->upDirection(), spotlight);
-		
-		// draw to the lbuffer
-		m_coneMesh.Draw();
+		//light->PerformShadowPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
+		//
+		//// draw to the lbuffer
+		//m_coneMesh.Draw();
 
 		///////////////////////////////////////////////////////
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-		glViewport( 0, 0, ( GLint )m_lbuffer.size.x, ( GLint )m_lbuffer.size.y );
+		glViewport(0, 0, (GLint)m_lbuffer.size.x, (GLint)m_lbuffer.size.y);
+
+		// enable blending so we don't nuke our directional light pass
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFunc(GL_ONE, GL_ONE); 
 
 		BindGBufferTextures(spotlight);
-
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
-		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 6);
 
 		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
-
+		
+		// disable blending
 		glDisable(GL_BLEND);
 	}	
 

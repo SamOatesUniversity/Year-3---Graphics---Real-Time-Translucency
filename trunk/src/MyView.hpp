@@ -94,12 +94,6 @@ private:
 													const MyScene::Camera &camera					//!< The camera of which we want to render from
 												);
 
-												//! Draw the scenes point lights to the lbuffer
-	void										DrawPointLights(
-													const MyScene::Camera &camera,					//!< The camera of which we want to render from
-													const float &aspect_ratio						//!< The aspect ratio of the window
-												);
-
 												//! Draw the scenes spot lights to the lbuffer
 	void										DrawSpotLights(
 													const MyScene::Camera &camera,					//!< The camera of which we want to render from
