@@ -793,9 +793,12 @@ void MyView::DrawSpotLights(
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 
-	//for (Light *light : m_light)
+	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		Light *light = m_light[0];
+		//const int lightIndex = 0;
+		Light *light = m_light[lightIndex];
+		light->Update(scene_->light(lightIndex));
+
 		light->CalculateWorldMatrix(scene_->upDirection());
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);

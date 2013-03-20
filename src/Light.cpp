@@ -1,7 +1,7 @@
 #include "Light.h"
 
 
-Light::Light( const MyScene::Light &light )
+Light::Light( MyScene::Light &light )
 {
 	m_light = light;
 }
@@ -96,4 +96,9 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_coneangle"), (m_light.field_of_view_degrees *0.5f) * 0.017f);	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_position"), 1, glm::value_ptr(m_light.position));	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(m_light.direction));	
+}
+
+void Light::Update( const MyScene::Light &light )
+{
+	m_light = light;
 }
