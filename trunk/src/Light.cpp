@@ -65,7 +65,7 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 	
 	// set the current point lights data
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_range"), m_light.range);				
-	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_coneangle"), (m_light.field_of_view_degrees *0.5f) * 0.017f);	
+	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_coneangle"), (m_light.field_of_view_degrees * 0.5f) * 0.017f);	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_position"), 1, glm::value_ptr(m_light.position));	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(m_light.direction));	
 }

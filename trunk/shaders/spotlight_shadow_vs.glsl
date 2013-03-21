@@ -5,7 +5,7 @@ uniform mat4 viewMatrix;
 uniform mat4 worldMatrix;  
 
 in vec3 vertex_position;
-out vec4 world_position;
+out vec4 lvpVertexPosition;
 
 void main(void)
 {
@@ -13,5 +13,5 @@ void main(void)
 	gl_Position = viewMatrix * gl_Position;
 	gl_Position = projectionMatrix * gl_Position;
 	
-	world_position = gl_Position;
+	lvpVertexPosition = gl_Position;
 }

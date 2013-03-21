@@ -1,10 +1,10 @@
 #version 330
 
-in vec4 world_position;
+in vec4 lvpVertexPosition;
 out vec4 fragment_colour;
 
 void main(void)
 {
-	float depth = world_position.z / world_position.w;
-	fragment_colour = vec4(depth, depth, depth, 1.0f);
+	float depth = lvpVertexPosition.z / lvpVertexPosition.w;
+	fragment_colour =  vec4(depth, 0.0f, 0.0f, 1.0f);
 }
