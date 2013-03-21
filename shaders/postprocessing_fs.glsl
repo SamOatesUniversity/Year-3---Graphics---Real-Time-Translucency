@@ -2,12 +2,6 @@
 
 #include "antialiasing/blur.fs"
 
-#define SMAA_PIXEL_SIZE float2(1.0 / 1280.0, 1.0 / 720.0)
-#define SMAA_GLSL_3 1
-#define SMAA_PRESET_LOW 1
-
-#include "antialiasing/SMAA.fs"
-
 uniform sampler2D sampler_pixel;
 out vec4 fragment_colour;
 

@@ -200,9 +200,13 @@ void MyView::CreateGBuffer(
 	}
 
 	// setup depth
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
+	//glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
+	//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
+
+	glBindTexture(GL_TEXTURE_2D, m_gbuffer.depth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_gbuffer.depth, 0);
 
 	glDrawBuffers(GBufferTexture::noof, drawBufs);
 
@@ -238,7 +242,7 @@ void MyView::CreateLBuffer(
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lbuffer.texture, 0);
 
 	m_lbuffer.depth = m_gbuffer.depth;
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_lbuffer.depth, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_lbuffer.depth, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
@@ -262,21 +266,20 @@ void MyView::CreateShadowBuffer(
 	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 
 	// render texture
-	GLenum drawBufs[1];
-
 	glGenTextures(1, &m_shadowbuffer.texture);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, nullptr);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_RECTANGLE, m_shadowbuffer.texture, 0);
-	drawBufs[0] = GL_COLOR_ATTACHMENT0;
-
-	// setup depth
+	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture, 0);
+	
+	// depth stencil
 	glGenTextures(1, &m_shadowbuffer.depth);
-	glBindTexture(GL_TEXTURE_RECTANGLE, m_shadowbuffer.depth);
-	glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_shadowbuffer.depth, 0);
-
-	glDrawBuffers(1, drawBufs);
+	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.depth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_shadowbuffer.depth, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		tglDebugMessage(GL_DEBUG_SEVERITY_HIGH, "framebuffer not complete");
@@ -571,7 +574,7 @@ void MyView::RenderGBuffer(
 
 	// Enable depth test to less than
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS); 
+	glDepthFunc(GL_LEQUAL); 
 	glDepthMask(GL_TRUE);
 
 	// Set our shader to use to the gbuffer shader
@@ -634,9 +637,6 @@ void MyView::RenderLBuffer(
 
 	// Render the directional light 
 	DrawDirectionalLight(camera);
-
-	// Draw the point lights in the scene
-	//DrawPointLights(camera, aspect_ratio);
 
 	// Draw the point lights in the scene
 	DrawSpotLights(camera, aspect_ratio);
@@ -749,7 +749,7 @@ void MyView::DrawSpotLights(
 	
 	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		const int lightIndex = 0;
+		const int lightIndex = 1;
 		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 
@@ -757,6 +757,8 @@ void MyView::DrawSpotLights(
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 		glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
+				
+		glDisable(GL_BLEND);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -766,7 +768,7 @@ void MyView::DrawSpotLights(
 		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
 		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LESS); 
+		glDepthFunc(GL_LEQUAL); 
 		glDepthMask(GL_TRUE);
 
 		glUseProgram(spotlightShadow->GetProgram());
@@ -783,10 +785,6 @@ void MyView::DrawSpotLights(
 			// draw the mesh
 			mesh.Draw();		
 		}
-
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_STENCIL_TEST);
-		
 		///////////////////////////////////////////////////////
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
@@ -794,6 +792,10 @@ void MyView::DrawSpotLights(
 
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
+		glDepthFunc(GL_EQUAL); 
 
 		// enable blending so we don't nuke our directional light pass
 		glEnable(GL_BLEND);
@@ -804,18 +806,26 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
+		// Pass in our shadow depth map
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
+		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
+
 		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
-		
-		// disable blending
-		glDisable(GL_BLEND);
+
 		glDisable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+
 	}		
+	
 
 	// Bind back to default for safety
+	glUseProgram(0);
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
