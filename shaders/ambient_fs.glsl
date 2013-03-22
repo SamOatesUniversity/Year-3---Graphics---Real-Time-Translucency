@@ -7,9 +7,6 @@ uniform sampler2DRect sampler_world_normal;
 uniform sampler2DRect sampler_material_info;
 uniform sampler2DRect sampler_world_tangent;
 
-uniform sampler2D sampler_brick_diffuse;
-uniform sampler2D sampler_brick_normal;
-
 uniform vec3 directional_light_direction = vec3(0.0f, 1.0f, 0.5f);
 uniform vec3 camera_position;
 

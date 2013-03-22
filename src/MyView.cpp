@@ -198,6 +198,7 @@ void MyView::CreateGBuffer(
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
 		drawBufs[textureIndex] = GL_COLOR_ATTACHMENT0 + textureIndex;
 	}
+	glDrawBuffers(GBufferTexture::noof, drawBufs);
 
 	// setup depth
 	//glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
@@ -207,9 +208,7 @@ void MyView::CreateGBuffer(
 	glBindTexture(GL_TEXTURE_2D, m_gbuffer.depth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_gbuffer.depth, 0);
-
-	glDrawBuffers(GBufferTexture::noof, drawBufs);
-
+	
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "Failed to create GBuffer!" << std::endl;
@@ -503,17 +502,6 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	// POST PROCESSING
 	PerformPostProcessing();
-		
-	// Bind to nothing
-	for (unsigned int textureIndex = 0; textureIndex < 6; ++textureIndex)
-	{
-		glActiveTexture(GL_TEXTURE0 + textureIndex);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glUseProgram(0);
-	glBindVertexArray(0);
 }
 
 float GetMaterialIndexFromColor(
@@ -575,7 +563,6 @@ void MyView::RenderGBuffer(
 	// Enable depth test to less than
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL); 
-	glDepthMask(GL_TRUE);
 
 	// Set our shader to use to the gbuffer shader
 	const Shader *const gbuffer = m_shader["gbuffer"];
@@ -610,9 +597,13 @@ void MyView::RenderGBuffer(
 		mesh.Draw();		
 	}
 
+	glDisable(GL_STENCIL_TEST);
+
 	// disable depth testing
 	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+		
+	// clear the shader to default
+	glUseProgram(0);
 
 	// Bind back to default framebuffer for safety (always use protection kids)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -631,17 +622,11 @@ void MyView::RenderLBuffer(
 	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// TODO SAM: Work out what the fuck stenciling i need to do
-	glStencilFunc(GL_EQUAL, 1, ~0);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
 	// Render the directional light 
 	DrawDirectionalLight(camera);
 
 	// Draw the point lights in the scene
-	DrawSpotLights(camera, aspect_ratio);
-
-	glDisable(GL_STENCIL_TEST);
+	//DrawSpotLights(camera, aspect_ratio);
 }
 
 /*
@@ -653,7 +638,7 @@ void MyView::PerformPostProcessing()
 
 	// Clear the screen
 	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Set our shader to use to the postprocessing shader
 	const Shader *const postprocessing = m_shader["postprocessing"];
@@ -667,6 +652,9 @@ void MyView::PerformPostProcessing()
 
 	glBindVertexArray(m_meshQuad.getVAO());
 	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
+
+	glUseProgram(0);
+	glBindVertexArray(0);
 }
 
 /*
@@ -707,6 +695,13 @@ void MyView::DrawDirectionalLight(
 	const Shader *const ambiant = m_shader["ambiant"];
 	glUseProgram(ambiant->GetProgram());
 
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_EQUAL, 1, ~0);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
 	BindGBufferTextures(ambiant);
 
 	// Instantiate our uniforms
@@ -717,7 +712,11 @@ void MyView::DrawDirectionalLight(
 	glBindVertexArray(m_meshQuad.getVAO());
 	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
 
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_DEPTH_TEST);
+
 	// Bind back to default for safety
+	glUseProgram(0);
 	glBindVertexArray(0);
 }
 
@@ -769,7 +768,6 @@ void MyView::DrawSpotLights(
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL); 
-		glDepthMask(GL_TRUE);
 
 		glUseProgram(spotlightShadow->GetProgram());
 						
@@ -785,6 +783,10 @@ void MyView::DrawSpotLights(
 			// draw the mesh
 			mesh.Draw();		
 		}
+
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_DEPTH_TEST);
+
 		///////////////////////////////////////////////////////
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
@@ -793,9 +795,12 @@ void MyView::DrawSpotLights(
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_EQUAL, 1, ~0);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
 		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_FALSE);
-		glDepthFunc(GL_EQUAL); 
+		glDepthFunc(GL_ALWAYS); 
 
 		// enable blending so we don't nuke our directional light pass
 		glEnable(GL_BLEND);
@@ -816,11 +821,11 @@ void MyView::DrawSpotLights(
 		// draw to the lbuffer
 		m_coneMesh.Draw();
 
+
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_BLEND);
+		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
-		glDepthMask(GL_TRUE);
-
 	}		
 	
 
