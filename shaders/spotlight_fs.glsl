@@ -12,7 +12,9 @@ uniform float spotlight_range;
 uniform vec3 spotlight_direction;
 uniform float spotlight_coneangle;
 
-uniform mat4 light_view_projection_xform;
+uniform mat4 light_view_xform;
+uniform mat4 light_projection_xform;
+
 uniform vec3 camera_position;
 
 out vec3 fragment_colour;
@@ -38,7 +40,7 @@ vec3 SpotLightPass()
 	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
 	vec4 materialInfo = texelFetch(sampler_material_info, p);
 
-	vec3 lighting = SpotLight(worldPosition, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.5f, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
+	vec3 lighting = SpotLight(worldPosition, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.75f, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
 	return lighting;
 }
 
@@ -47,16 +49,31 @@ vec3 Shadow()
 	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
 	vec4 worldPosition = texelFetch(sampler_world_position, p);
 
-	vec4 hpos_from_light = light_view_projection_xform * worldPosition;
+	vec4 hpos_from_light = light_projection_xform * light_view_xform * worldPosition;
     float light_to_point_depth = hpos_from_light.z / hpos_from_light.w;
 
-    vec2 shadow_texcoord = vec2(((hpos_from_light.x / hpos_from_light.w) + 1.0f) * 0.5f, ((hpos_from_light.y / hpos_from_light.w) + 1.0f) * 0.5f);
+	float xCoord = ((hpos_from_light.x / hpos_from_light.w) + 1.0f) * 0.5f;
+	float yCoord = ((hpos_from_light.y / hpos_from_light.w) + 1.0f) * 0.5f;
 
-	const float bias = 0.0004f;
-    float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord).x;
-    float shadowing = (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.0f : 1.0f;
+    vec2 shadow_texcoord = vec2(xCoord, yCoord);
 
-	return vec3(shadowing, shadowing, shadowing);
+	const float bias = 0.00003f;
+	const int level_of_filtering = 2;
+	const int kernal = 1;
+
+	float shadowing = 0.0f;
+    float count = 0.0f;
+    for( int x = -level_of_filtering; x <= level_of_filtering; x += kernal )
+	{
+        for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
+		{
+			float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord + vec2(x / 2048.0f, y / 2048.0f)).x;
+			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.0f : 1.0f;
+			count += 1.0f;
+		}
+	}
+
+	return vec3(shadowing / count, shadowing / count, shadowing / count);
 }
 
 void main(void)

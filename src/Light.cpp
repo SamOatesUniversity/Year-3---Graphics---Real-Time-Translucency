@@ -53,15 +53,15 @@ void Light::PerformShadowPass(
 
 void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position )
 {
-	const glm::mat4 light_view_projection = m_lightview * m_lightprojection;
-
 	// Instantiate our uniforms
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "camera_position"), 1, glm::value_ptr(camera_position));	
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "viewMatrix"), 1, GL_FALSE, &view_xform[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &projection_xform[0][0]); 
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &m_lightxform[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_projection_xform"), 1, GL_FALSE, &light_view_projection[0][0]);
+
+	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_xform"), 1, GL_FALSE, &m_lightview[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
 	
 	// set the current point lights data
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_range"), m_light.range);				
