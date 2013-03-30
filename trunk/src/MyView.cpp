@@ -458,7 +458,7 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
     glViewport(0, 0, width, height);
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
-	CreateShadowBuffer(1024, 1024);
+	CreateShadowBuffer(2048, 2048);
 }
 
 void MyView::
@@ -626,7 +626,7 @@ void MyView::RenderLBuffer(
 	DrawDirectionalLight(camera);
 
 	// Draw the point lights in the scene
-	//DrawSpotLights(camera, aspect_ratio);
+	DrawSpotLights(camera, aspect_ratio);
 }
 
 /*
@@ -746,9 +746,9 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 	
-	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		const int lightIndex = 1;
+		//const int lightIndex = 1;
 		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 
@@ -769,6 +769,9 @@ void MyView::DrawSpotLights(
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL); 
 
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+
 		glUseProgram(spotlightShadow->GetProgram());
 						
 		// Draw all our models to the gbuffer
@@ -786,6 +789,7 @@ void MyView::DrawSpotLights(
 
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
 
 		///////////////////////////////////////////////////////
 
