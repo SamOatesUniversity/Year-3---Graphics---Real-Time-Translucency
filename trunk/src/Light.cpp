@@ -51,7 +51,7 @@ void Light::PerformShadowPass(
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);	
 }
 
-void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position )
+void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position, const bool castShadows)
 {
 	// Instantiate our uniforms
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "camera_position"), 1, glm::value_ptr(camera_position));	
@@ -60,9 +60,15 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &m_lightxform[0][0]);
 
-	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_xform"), 1, GL_FALSE, &m_lightview[0][0]);
-	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
+	if (castShadows)
+	{
+		glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_xform"), 1, GL_FALSE, &m_lightview[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
+	}
 	
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "cast_shadows"), castShadows);	
+	glUniform1f(glGetUniformLocation(shader->GetProgram(), "oneOverShadowMapSize"), ONE_OVER_SHADOW_MAP_SIZE);
+
 	// set the current point lights data
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_range"), m_light.range);				
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_coneangle"), (m_light.field_of_view_degrees * 0.5f) * 0.017f);	

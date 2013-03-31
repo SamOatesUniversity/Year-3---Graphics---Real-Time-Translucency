@@ -267,7 +267,7 @@ void MyView::CreateShadowBuffer(
 	// render texture
 	glGenTextures(1, &m_shadowbuffer.texture);
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -458,7 +458,7 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
     glViewport(0, 0, width, height);
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
-	CreateShadowBuffer(2048, 2048);
+	CreateShadowBuffer(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
 }
 
 void MyView::
@@ -750,46 +750,50 @@ void MyView::DrawSpotLights(
 	{
 		//const int lightIndex = 1;
 		Light *const light = m_light[lightIndex];
-		light->Update(scene_->light(lightIndex));
-
-		light->CalculateWorldMatrix(scene_->upDirection());
-
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
-		glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
-				
-		glDisable(GL_BLEND);
-
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		glEnable(GL_STENCIL_TEST);
-		glStencilFunc(GL_ALWAYS, 1, ~0);
-		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL); 
-
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-		glUseProgram(spotlightShadow->GetProgram());
-						
-		// Draw all our models to the gbuffer
-		const int noofModels = scene_->modelCount();
-		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		const bool castShadow = scene_->light(lightIndex).casts_shadows;
+		if (castShadow)
 		{
-			const MyScene::Model model = scene_->model(modelIndex);
-			const Mesh mesh = m_meshes[model.mesh_index];
+			light->Update(scene_->light(lightIndex));
 
-			light->PerformShadowPass(spotlightShadow, model, mesh);
+			light->CalculateWorldMatrix(scene_->upDirection());
 
-			// draw the mesh
-			mesh.Draw();		
+			glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+			glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
+				
+			glDisable(GL_BLEND);
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+			glEnable(GL_STENCIL_TEST);
+			glStencilFunc(GL_ALWAYS, 1, ~0);
+			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL); 
+
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+
+			glUseProgram(spotlightShadow->GetProgram());
+						
+			// Draw all our models to the gbuffer
+			const int noofModels = scene_->modelCount();
+			for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+			{
+				const MyScene::Model model = scene_->model(modelIndex);
+				const Mesh mesh = m_meshes[model.mesh_index];
+
+				light->PerformShadowPass(spotlightShadow, model, mesh);
+
+				// draw the mesh
+				mesh.Draw();		
+			}
+
+			glDisable(GL_STENCIL_TEST);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_CULL_FACE);
 		}
-
-		glDisable(GL_STENCIL_TEST);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_CULL_FACE);
 
 		///////////////////////////////////////////////////////
 
@@ -815,12 +819,15 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		// Pass in our shadow depth map
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
-		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
+		if (castShadow)
+		{
+			// Pass in our shadow depth map
+			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
+			glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
+		}
 
-		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position);
+		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position, castShadow);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
