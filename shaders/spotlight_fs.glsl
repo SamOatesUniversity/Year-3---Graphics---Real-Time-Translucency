@@ -17,6 +17,9 @@ uniform mat4 light_projection_xform;
 
 uniform vec3 camera_position;
 
+uniform int cast_shadows;
+uniform float oneOverShadowMapSize;
+
 out vec3 fragment_colour;
 
 vec3 SpotLight(vec3 worldPosition, vec3 worldNormal, vec3 position, vec3 direction, float cone, float maxrange, vec3 colour)
@@ -32,23 +35,8 @@ vec3 SpotLight(vec3 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
     return lighting;
 }
 
-vec3 SpotLightPass()
+vec3 Shadow(vec4 worldPosition)
 {
-	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
-
-	vec3 worldPosition = texelFetch(sampler_world_position, p).xyz;
-	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
-	vec4 materialInfo = texelFetch(sampler_material_info, p);
-
-	vec3 lighting = SpotLight(worldPosition, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.75f, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
-	return lighting;
-}
-
-vec3 Shadow()
-{
-	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
-	vec4 worldPosition = texelFetch(sampler_world_position, p);
-
 	vec4 hpos_from_light = light_projection_xform * light_view_xform * worldPosition;
     float light_to_point_depth = hpos_from_light.z / hpos_from_light.w;
 
@@ -67,7 +55,7 @@ vec3 Shadow()
 	{
         for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
 		{
-			float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord + vec2(x / 2048.0f, y / 2048.0f)).x;
+			float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord + vec2(x * oneOverShadowMapSize, y * oneOverShadowMapSize)).x;
 			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.0f : 1.0f;
 			count += 1.0f;
 		}
@@ -76,9 +64,25 @@ vec3 Shadow()
 	return vec3(shadowing / count, shadowing / count, shadowing / count);
 }
 
+vec3 SpotLightPass()
+{
+	ivec2 p = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+
+	vec4 worldPosition = texelFetch(sampler_world_position, p);
+	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
+	vec4 materialInfo = texelFetch(sampler_material_info, p);
+
+	vec3 lighting = SpotLight(worldPosition.xyz, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.75f, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
+
+	if (cast_shadows == 1)
+	{
+		lighting *= Shadow(worldPosition);
+	}
+
+	return lighting;
+}
+
 void main(void)
 {
-	vec3 spotLight = SpotLightPass();
-	vec3 shadowAttenuation = Shadow();
-	fragment_colour = spotLight * shadowAttenuation;
+	fragment_colour = SpotLightPass();
 }
