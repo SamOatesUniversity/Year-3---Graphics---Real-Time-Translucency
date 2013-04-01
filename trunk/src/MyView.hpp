@@ -28,6 +28,15 @@ struct GBufferTexture {
 	};
 };
 
+struct TranslucencyTexture {
+	enum {
+		depth,
+		irradiance,
+		surfacenormal,
+		noof
+	};
+};
+
 struct GFXCardType {
 	enum Enum {
 		ATI,
@@ -133,7 +142,7 @@ private:
 
 	struct {
 		GLuint frameBuffer;
-		GLuint texture;
+		GLuint texture[TranslucencyTexture::noof];
 		GLuint depth;
 		glm::vec2 size;
 	} m_shadowbuffer;
