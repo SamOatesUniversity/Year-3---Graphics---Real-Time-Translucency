@@ -115,6 +115,7 @@ void MyView::reloadShaders()
 	{
 		glAttachShader(spotlightShadow->GetProgram(), spotlightShadow->GetVertexShader());
 		glBindAttribLocation(spotlightShadow->GetProgram(), 0, "vertex_position");
+		glBindAttribLocation(spotlightShadow->GetProgram(), 1, "vertex_normal");
 
 		glAttachShader(spotlightShadow->GetProgram(), spotlightShadow->GetFragmentShader());
 		glBindFragDataLocation(spotlightShadow->GetProgram(), 0, "fragment_colour");
@@ -793,17 +794,16 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 	
-	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		//const int lightIndex = 1;
+		const int lightIndex = 2;
 		Light *const light = m_light[lightIndex];
-		const bool castShadow = scene_->light(lightIndex).casts_shadows;
+		light->Update(scene_->light(lightIndex));
+		light->CalculateWorldMatrix(scene_->upDirection());
+
+		const bool castShadow = true;// scene_->light(lightIndex).casts_shadows;
 		if (castShadow)
 		{
-			light->Update(scene_->light(lightIndex));
-
-			light->CalculateWorldMatrix(scene_->upDirection());
-
 			glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 			glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
 				
@@ -830,8 +830,9 @@ void MyView::DrawSpotLights(
 			{
 				const MyScene::Model model = scene_->model(modelIndex);
 				const Mesh mesh = m_meshes[model.mesh_index];
+				const MyScene::Material material = scene_->material(model.material_index);
 
-				light->PerformShadowPass(spotlightShadow, model, mesh);
+				light->PerformShadowPass(spotlightShadow, model, mesh, material);
 
 				// draw the mesh
 				mesh.Draw();		
