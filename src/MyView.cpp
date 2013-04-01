@@ -262,7 +262,6 @@ void MyView::CreateShadowBuffer(
 	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 
 	// render texture
-	
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -270,7 +269,29 @@ void MyView::CreateShadowBuffer(
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth], 0);
+
+	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::irradiance]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::irradiance], 0);
+
+	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::surfacenormal]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::surfacenormal], 0);
 	
+	GLenum drawBufs[TranslucencyTexture::noof];
+	drawBufs[TranslucencyTexture::depth] = GL_COLOR_ATTACHMENT0;
+	drawBufs[TranslucencyTexture::irradiance] = GL_COLOR_ATTACHMENT1;
+	drawBufs[TranslucencyTexture::surfacenormal] = GL_COLOR_ATTACHMENT2;
+	glDrawBuffers(TranslucencyTexture::noof, drawBufs);
+
 	// depth stencil
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.depth);
 
@@ -421,8 +442,8 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		{
 			vertices[vertexIndex].position = sceneMesh.position_array[vertexIndex];
 			vertices[vertexIndex].normal = sceneMesh.normal_array[vertexIndex];
-			if (sceneMesh.tangent_array.size() > 0 ) vertices[vertexIndex].tangent = sceneMesh.tangent_array[vertexIndex];
-			if (sceneMesh.texcoord_array.size() > 0 ) vertices[vertexIndex].texcoord = sceneMesh.texcoord_array[vertexIndex];
+			if (!sceneMesh.tangent_array.empty()) vertices[vertexIndex].tangent = sceneMesh.tangent_array[vertexIndex];
+			if (!sceneMesh.texcoord_array.empty()) vertices[vertexIndex].texcoord = sceneMesh.texcoord_array[vertexIndex];
 		}
 
 		// populate elements (index) array
