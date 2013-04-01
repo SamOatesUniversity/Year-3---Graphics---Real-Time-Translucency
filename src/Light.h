@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 2048
+#define SHADOW_MAP_SIZE 512
 
 #if SHADOW_MAP_SIZE == 512
 	#define ONE_OVER_SHADOW_MAP_SIZE 0.001953125f
@@ -42,7 +42,8 @@ public:
 	void								PerformShadowPass(
 											const Shader *const shader, 
 											const MyScene::Model &model,
-											const Mesh &mesh
+											const Mesh &mesh,
+											const MyScene::Material &material
 										);
 
 	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position, const bool castShadows);

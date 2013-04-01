@@ -41,11 +41,15 @@ void Light::CalculateWorldMatrix(glm::vec3 sceneUp)
 void Light::PerformShadowPass( 
 		const Shader *const shader, 
 		const MyScene::Model &model,
-		const Mesh &mesh
+		const Mesh &mesh,
+		const MyScene::Material &material
 	)
 {
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "viewMatrix"), 1, GL_FALSE, &m_lightview[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &m_lightprojection[0][0]); 
+
+	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "lightPosition"), 1, glm::value_ptr(m_light.position));
+	glUniform1f(glGetUniformLocation(shader->GetProgram(), "translucency"), material.translucency); 
 
 	glm::mat4 xform = glm::mat4(model.xform);
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);	
