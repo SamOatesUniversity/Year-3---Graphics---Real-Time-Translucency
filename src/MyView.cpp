@@ -263,13 +263,13 @@ void MyView::CreateShadowBuffer(
 
 	// render texture
 	
-	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
+	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth], 0);
 	
 	// depth stencil
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.depth);
@@ -466,7 +466,7 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	 glGenTextures(1, &m_lbuffer.texture);
 
 	 glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
-	 glGenTextures(1, &m_shadowbuffer.texture);
+	 glGenTextures(TranslucencyTexture::noof, m_shadowbuffer.texture);
 	 glGenTextures(1, &m_shadowbuffer.depth);
 }
 
@@ -849,7 +849,7 @@ void MyView::DrawSpotLights(
 		{
 			// Pass in our shadow depth map
 			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
+			glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
 			glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
 		}
 
