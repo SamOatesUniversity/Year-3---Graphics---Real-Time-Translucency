@@ -12,6 +12,7 @@ MyView()
 	m_gbuffer.frameBuffer = NULL;
 	m_lbuffer.frameBuffer = NULL;
 	m_shadowbuffer.frameBuffer = NULL;
+	m_gfxCard = GFXCardType::UNKNOWN;
 }
 
 MyView::
@@ -183,11 +184,7 @@ void MyView::CreateGBuffer(
 	int windowHeight
 	)
 {
-	glGenFramebuffers(1, &m_gbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.frameBuffer);
-
-	glGenTextures(GBufferTexture::noof, m_gbuffer.texture);
-	glGenTextures(1, &m_gbuffer.depth);
 
 	GLenum drawBufs[GBufferTexture::noof];
 
@@ -201,12 +198,15 @@ void MyView::CreateGBuffer(
 	glDrawBuffers(GBufferTexture::noof, drawBufs);
 
 	// setup depth
-	//glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.depth);
-	//glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_RECTANGLE, m_gbuffer.depth, 0);
 
 	glBindTexture(GL_TEXTURE_2D, m_gbuffer.depth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	if (m_gfxCard == GFXCardType::ATI) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_gbuffer.depth, 0);
 	
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -226,10 +226,8 @@ void MyView::CreateLBuffer(
 	int windowHeight
 	)
 {
-	glGenFramebuffers(1, &m_lbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
-
-	glGenTextures(1, &m_lbuffer.texture);
+	
 	glBindTexture(GL_TEXTURE_2D, m_lbuffer.texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -261,11 +259,10 @@ void MyView::CreateShadowBuffer(
 	m_shadowbuffer.size.y = static_cast<float>(windowHeight);
 
 	// frame buffer
-	glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 
 	// render texture
-	glGenTextures(1, &m_shadowbuffer.texture);
+	
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -275,9 +272,14 @@ void MyView::CreateShadowBuffer(
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture, 0);
 	
 	// depth stencil
-	glGenTextures(1, &m_shadowbuffer.depth);
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.depth);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
+	if (m_gfxCard == GFXCardType::ATI) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowWidth, windowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_shadowbuffer.depth, 0);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -295,6 +297,13 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	for (int lightIndex = 0; lightIndex < scene_->lightCount(); ++lightIndex)
 	{
 		m_light.push_back(new Light(scene_->light(lightIndex)));
+	}
+
+	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+	if (gfxCard.find("ATI") != std::string::npos) {
+		m_gfxCard = GFXCardType::ATI;
+	} else {
+		m_gfxCard = GFXCardType::NVIDIA;
 	}
 
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
@@ -448,6 +457,17 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	 glBindTexture(GL_TEXTURE_2D, 0);
+
+	 glGenFramebuffers(1, &m_gbuffer.frameBuffer);
+	 glGenTextures(GBufferTexture::noof, m_gbuffer.texture);
+	 glGenTextures(1, &m_gbuffer.depth);
+
+	 glGenFramebuffers(1, &m_lbuffer.frameBuffer);
+	 glGenTextures(1, &m_lbuffer.texture);
+
+	 glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
+	 glGenTextures(1, &m_shadowbuffer.texture);
+	 glGenTextures(1, &m_shadowbuffer.depth);
 }
 
 void MyView::
@@ -464,6 +484,12 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 void MyView::
 windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
+	for (Light *light : m_light)
+	{
+		delete light;
+	}
+	m_light.clear();
+
 	// free all meshes
 	for (Mesh mesh : m_meshes)
 		mesh.Release();
@@ -481,7 +507,7 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
 	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
 
-	ProFy::GetInstance().OutputTimer(m_timer[Timer::ShaderLoadtime], true);
+	ProFy::GetInstance().OutputTimer(m_timer[Timer::ShaderLoadtime], false);
 }
 
 void MyView::

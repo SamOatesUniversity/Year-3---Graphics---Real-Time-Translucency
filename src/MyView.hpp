@@ -14,6 +14,8 @@
 #include <memory>
 #include <map>
 
+//#include <vld.h>
+
 class MyScene;
 
 struct GBufferTexture {
@@ -23,6 +25,14 @@ struct GBufferTexture {
 		material,
 		tangents,
 		noof
+	};
+};
+
+struct GFXCardType {
+	enum Enum {
+		ATI,
+		NVIDIA,
+		UNKNOWN
 	};
 };
 
@@ -127,6 +137,8 @@ private:
 		GLuint depth;
 		glm::vec2 size;
 	} m_shadowbuffer;
+
+	GFXCardType::Enum							m_gfxCard;
 
     std::shared_ptr<const MyScene> scene_;
 

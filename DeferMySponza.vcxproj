@@ -49,8 +49,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>.\framework;.\include;..\ProFy\ProFy\src;$(IncludePath)</IncludePath>
-    <LibraryPath>.\lib;..\ProFy\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\framework;.\include;..\ProFy\ProFy\src;C:\Code\University\Year Three\ProFy\ProFy\src;C:\Program Files %28x86%29\Visual Leak Detector\include;$(IncludePath)</IncludePath>
+    <LibraryPath>.\lib;..\ProFy\Debug;C:\Code\University\Year Three\ProFy\Debug;C:\Program Files %28x86%29\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
