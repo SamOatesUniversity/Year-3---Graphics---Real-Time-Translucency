@@ -49,6 +49,7 @@ void Light::PerformShadowPass(
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "projectionMatrix"), 1, GL_FALSE, &m_lightprojection[0][0]); 
 
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "lightPosition"), 1, glm::value_ptr(m_light.position));
+	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "lightDirection"), 1, glm::value_ptr(m_light.direction));
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "translucency"), material.translucency); 
 
 	glm::mat4 xform = glm::mat4(model.xform);

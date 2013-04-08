@@ -1,12 +1,34 @@
 #version 330
 
 uniform vec3 lightPosition;
+uniform vec3 lightDirection;
 uniform float translucency;
 
 in vec4 lvpVertexPosition;
 in vec4 lvpVertexNormal;
 
 out vec4 fragment_colour[3];
+
+vec4 CalculateIrradiance()
+{
+	vec3 Xin = lvpVertexNormal.xyz;
+	vec3 Nxin = normalize(Xin);
+	vec3 Win = normalize(Xin - lightPosition);
+	float I = translucency;
+
+	// Ft (n, win) | N(xin) win | I(win)
+
+	float n2 = 1.55f;
+	float r0 = pow((1.0f - n2) / (1.0f + n2), 2.0f);
+
+	float schlick = r0 + (1.0f - r0) * pow(1 - cos(dot(-Win, lightDirection)), 5.0f);
+	float LdN = dot(Nxin, Win);
+	float part3 = translucency;
+
+	float Exin = schlick * Ldn * part3;
+
+	return vec4(Exin, Exin, Exin, 1.0f);
+}
 
 void main(void)
 {
@@ -16,19 +38,10 @@ void main(void)
 	
 	if (translucency != 0.0f) 
 	{
-		// irradiance
-		vec3 N = normalize(lvpVertexNormal.xyz);
-		vec3 L = normalize(lvpVertexPosition.xyz - lightPosition);
-
-		float k = pow(1.0f - max(0.0f, dot(N, L)), 5.0f);
-		float Ft = 1.0f - k + 1.0f * k;
-
-		float intensity = 1.0f + translucency;
-		vec3 E = vec3(Ft * max(0.0f, dot(N, L))) * intensity;
-
-		fragment_colour[1] =  vec4(E, 1.0f);
+		// irradiance		
+		fragment_colour[1] =  CalculateIrradiance();
 
 		// surface normal
-		fragment_colour[2] =  lvpVertexNormal;
+		fragment_colour[2] =  normalize(lvpVertexNormal);
 	}
 }
