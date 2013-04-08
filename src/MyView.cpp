@@ -794,54 +794,52 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 	
-	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		const int lightIndex = 2;
+		//const int lightIndex = 3;
 		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 		light->CalculateWorldMatrix(scene_->upDirection());
 
-		const bool castShadow = true;// scene_->light(lightIndex).casts_shadows;
-		if (castShadow)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
-			glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
+		const bool castShadow = true;//  scene_->light(lightIndex).casts_shadows;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
+		glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
 				
-			glDisable(GL_BLEND);
+		glDisable(GL_BLEND);
 
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glEnable(GL_STENCIL_TEST);
-			glStencilFunc(GL_ALWAYS, 1, ~0);
-			glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, 1, ~0);
+		glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
 
-			glEnable(GL_DEPTH_TEST);
-			glDepthFunc(GL_LEQUAL); 
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL); 
 
-			glEnable(GL_CULL_FACE);
-			glCullFace(GL_BACK);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 
-			glUseProgram(spotlightShadow->GetProgram());
+		glUseProgram(spotlightShadow->GetProgram());
 						
-			// Draw all our models to the gbuffer
-			const int noofModels = scene_->modelCount();
-			for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
-			{
-				const MyScene::Model model = scene_->model(modelIndex);
-				const Mesh mesh = m_meshes[model.mesh_index];
-				const MyScene::Material material = scene_->material(model.material_index);
+		// Draw all our models to the gbuffer
+		const int noofModels = scene_->modelCount();
+		for (int modelIndex = 0; modelIndex < noofModels; ++modelIndex)
+		{
+			const MyScene::Model model = scene_->model(modelIndex);
+			const Mesh mesh = m_meshes[model.mesh_index];
+			const MyScene::Material material = scene_->material(model.material_index);
 
-				light->PerformShadowPass(spotlightShadow, model, mesh, material);
+			light->PerformShadowPass(spotlightShadow, model, mesh, material);
 
-				// draw the mesh
-				mesh.Draw();		
-			}
-
-			glDisable(GL_STENCIL_TEST);
-			glDisable(GL_DEPTH_TEST);
-			glDisable(GL_CULL_FACE);
+			// draw the mesh
+			mesh.Draw();		
 		}
+
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
 
 		///////////////////////////////////////////////////////
 
@@ -867,13 +865,10 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		if (castShadow)
-		{
-			// Pass in our shadow depth map
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
-			glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
-		}
+		// Pass in our shadow depth map
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
+		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
 
 		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position, castShadow);
 

@@ -46,7 +46,7 @@ vec3 Shadow(vec4 worldPosition)
     vec2 shadow_texcoord = vec2(xCoord, yCoord);
 
 	const float bias = 0.00003f;
-	const int level_of_filtering = 2;
+	const int level_of_filtering = 1;
 	const int kernal = 1;
 
 	float shadowing = 0.0f;
