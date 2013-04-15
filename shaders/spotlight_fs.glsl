@@ -45,7 +45,7 @@ vec3 Shadow(vec4 worldPosition)
 
     vec2 shadow_texcoord = vec2(xCoord, yCoord);
 
-	const float bias = 0.00003f;
+	const float bias = 0.0002f;
 	const int level_of_filtering = 1;
 	const int kernal = 1;
 
@@ -72,7 +72,7 @@ vec3 SpotLightPass()
 	vec3 worldNormal = texelFetch(sampler_world_normal, p).xyz;
 	vec4 materialInfo = texelFetch(sampler_material_info, p);
 
-	vec3 lighting = SpotLight(worldPosition.xyz, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 0.75f, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
+	vec3 lighting = SpotLight(worldPosition.xyz, worldNormal, spotlight_position, spotlight_direction, spotlight_coneangle * 2, spotlight_range, vec3(1.0f, 1.0f, 1.0f));
 
 	if (cast_shadows == 1)
 	{

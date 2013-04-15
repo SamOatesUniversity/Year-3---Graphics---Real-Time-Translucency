@@ -33,6 +33,7 @@ struct TranslucencyTexture {
 		depth,
 		irradiance,
 		surfacenormal,
+		xin,
 		noof
 	};
 };
