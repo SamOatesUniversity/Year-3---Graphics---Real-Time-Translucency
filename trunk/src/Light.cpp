@@ -50,6 +50,7 @@ void Light::PerformShadowPass(
 
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "lightPosition"), 1, glm::value_ptr(m_light.position));
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "lightDirection"), 1, glm::value_ptr(m_light.direction));
+	glUniform1f(glGetUniformLocation(shader->GetProgram(), "lightConeAngle"), m_light.field_of_view_degrees); 
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "translucency"), material.translucency); 
 
 	glm::mat4 xform = glm::mat4(model.xform);
@@ -65,11 +66,8 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &m_lightxform[0][0]);
 
-	if (castShadows)
-	{
-		glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_xform"), 1, GL_FALSE, &m_lightview[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
-	}
+	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_view_xform"), 1, GL_FALSE, &m_lightview[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
 	
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "cast_shadows"), castShadows);	
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "oneOverShadowMapSize"), ONE_OVER_SHADOW_MAP_SIZE);
