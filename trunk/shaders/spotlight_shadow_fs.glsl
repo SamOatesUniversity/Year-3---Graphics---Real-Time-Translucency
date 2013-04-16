@@ -14,7 +14,7 @@ vec4 CalculateIrradiance()
 {
 	vec3 Xin = lvpVertexPosition.xyz;				// Point on the surface
 	vec3 Nxin = normalize(lvpVertexNormal.xyz);		// Normal vector on the surface
-	vec3 Win = lightPosition - Xin;			d		// Incoming direction vector
+	vec3 Win = lightPosition - Xin;					// Incoming direction vector
 
 	// Ft (n, win)
 	float n2 = 1.55f; // MAGIC NUMBER! that represents the material of the object (kinda)
