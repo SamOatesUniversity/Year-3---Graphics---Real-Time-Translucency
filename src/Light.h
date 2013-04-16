@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 512
+#define SHADOW_MAP_SIZE 1024
 
 #if SHADOW_MAP_SIZE == 512
 	#define ONE_OVER_SHADOW_MAP_SIZE 0.001953125f
