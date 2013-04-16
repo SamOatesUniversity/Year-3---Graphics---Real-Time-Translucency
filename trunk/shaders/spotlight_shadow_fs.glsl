@@ -39,7 +39,7 @@ void main(void)
 	float depth = lvpVertexPosition.z / lvpVertexPosition.w;
 	fragment_colour[0] =  vec4(depth, 0.0f, 0.0f, 1.0f);
 	
-	if (translucency != 0.0f) 
+	//if (translucency != 0.0f) 
 	{
 		// irradiance		
 		fragment_colour[1] =  CalculateIrradiance();

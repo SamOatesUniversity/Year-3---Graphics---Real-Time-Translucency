@@ -802,9 +802,9 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 	
-	//for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	//for (unsigned int lightIndex = 2; lightIndex < 5; ++lightIndex)
 	{
-		const int lightIndex = 3;
+		const int lightIndex = 4;
 		Light *const light = m_light[lightIndex];
 		light->Update(scene_->light(lightIndex));
 		light->CalculateWorldMatrix(scene_->upDirection());
@@ -873,17 +873,21 @@ void MyView::DrawSpotLights(
 
 		BindGBufferTextures(spotlight);
 
-		// Pass in our shadow depth map
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
-		glUniform1i(glGetUniformLocation(spotlight->GetProgram(), "sampler_shadow_map"), 4);
+		std::string samplerName[] = {"sampler_shadow_map", "sampler_irradiance_map", "sampler_surfacenormal_map", "sampler_worldpos_map"};
+
+		// Pass in our translucency textures
+		for (int textureIndex = 0; textureIndex < TranslucencyTexture::noof; ++textureIndex)
+		{
+			glActiveTexture(GL_TEXTURE4 + textureIndex);
+			glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[textureIndex]);
+			glUniform1i(glGetUniformLocation(spotlight->GetProgram(), samplerName[textureIndex].c_str()), 4 + textureIndex);
+		}
 
 		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position, castShadow);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
-
-
+		
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_BLEND);
 		glDisable(GL_STENCIL_TEST);
