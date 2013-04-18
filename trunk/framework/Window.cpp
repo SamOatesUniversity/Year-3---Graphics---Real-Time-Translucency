@@ -12,6 +12,8 @@
 #define GLFW_NO_GLU
 #include <GL/glfw.h>
 
+#include <AntTweakBar.h>
+
 namespace tyga
 {
 
@@ -231,13 +233,16 @@ void Window::
 onMouseMove(int x,
             int y)
 {
-    // NB: GLFW limitation limits operation to a single window
-    Window* window = main_window_.get();
-    if (window != nullptr && window->controller_ != nullptr) {
-        window->controller_->windowControlMouseMoved(window->shared_from_this(),
-                                                     x,
-                                                     y);
-    }
+	if (!TwEventMousePosGLFW(x, y))
+	{
+		// NB: GLFW limitation limits operation to a single window
+		Window* window = main_window_.get();
+		if (window != nullptr && window->controller_ != nullptr) {
+			window->controller_->windowControlMouseMoved(window->shared_from_this(),
+														 x,
+														 y);
+		}
+	}
 }
 
 void Window::
@@ -256,28 +261,34 @@ void Window::
 onMouseButton(int button,
               int action)
 {
-    // NB: GLFW limitation limits operation to a single window
-    Window* window = main_window_.get();
-    if (window != nullptr && window->controller_ != nullptr) {
-        window->controller_
-          ->windowControlMouseButtonChanged(window->shared_from_this(),
-                                            button,
-                                            action == GLFW_PRESS);
-    }
+	if (!TwEventMouseButtonGLFW(button, action))
+	{
+		// NB: GLFW limitation limits operation to a single window
+		Window* window = main_window_.get();
+		if (window != nullptr && window->controller_ != nullptr) {
+			window->controller_
+			  ->windowControlMouseButtonChanged(window->shared_from_this(),
+												button,
+												action == GLFW_PRESS);
+		}
+	}
 }
 
 void Window::
 onKeyEvent(int key,
            int action)
 {
-    // NB: GLFW limitation limits operation to a single window
-    Window* window = main_window_.get();
-    if (window != nullptr && window->controller_ != nullptr) {
-        window->controller_
-          ->windowControlKeyboardChanged(window->shared_from_this(),
-                                         key,
-                                         action == GLFW_PRESS);
-    }
+	if (!TwEventKeyGLFW(key, action))
+	{
+		// NB: GLFW limitation limits operation to a single window
+		Window* window = main_window_.get();
+		if (window != nullptr && window->controller_ != nullptr) {
+			window->controller_
+			  ->windowControlKeyboardChanged(window->shared_from_this(),
+											 key,
+											 action == GLFW_PRESS);
+		}
+	}
 }
 
 void Window::
