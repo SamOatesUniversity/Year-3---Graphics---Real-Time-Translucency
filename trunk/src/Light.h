@@ -4,23 +4,17 @@
 #include "Shader.h"
 #include "Mesh.h"
 
-#define SHADOW_MAP_SIZE 1024
+enum eShadowMapSize 
+{
+	ShadowMapSize128,
+	ShadowMapSize256,
+	ShadowMapSize512,
+	ShadowMapSize1024,
+	ShadowMapSize2048,
+	ShadowMapSize4096
+};
 
-#if SHADOW_MAP_SIZE == 512
-	#define ONE_OVER_SHADOW_MAP_SIZE 0.001953125f
-#else 
-	#if SHADOW_MAP_SIZE == 1024 
-		#define ONE_OVER_SHADOW_MAP_SIZE 0.0009765625f
-	#else
-		#if SHADOW_MAP_SIZE == 2048
-			#define ONE_OVER_SHADOW_MAP_SIZE 0.00048828125f
-		#else
-			#if SHADOW_MAP_SIZE == 4096
-				#define ONE_OVER_SHADOW_MAP_SIZE 0.000244140625f
-			#endif
-		#endif
-	#endif
-#endif
+int ShadowMapToInt();
 
 class Light {
 
@@ -30,6 +24,16 @@ private:
 	glm::mat4							m_lightxform;
 	glm::mat4							m_lightview;
 	glm::mat4							m_lightprojection;
+
+public:
+
+	bool								Enabled;
+	float								NearPlane;
+
+public:
+
+	static eShadowMapSize				ShadowMapSize;	
+	static eShadowMapSize				OldShadowMapSize;	
 
 public:
 
@@ -46,7 +50,7 @@ public:
 											const MyScene::Material &material
 										);
 
-	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position, const bool castShadows);
+	void								PerformLightPass(glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position, const bool castShadows, const bool enableShadowPCF);
 
 	void								Update(
 											const MyScene::Light &light

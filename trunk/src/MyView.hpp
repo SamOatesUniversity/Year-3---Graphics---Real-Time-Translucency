@@ -47,6 +47,13 @@ struct GFXCardType {
 	};
 };
 
+struct RenderFlags
+{
+	bool enableShadows;
+	bool enableShadowPCF;
+	bool respectShadowFlag;
+};
+
 class MyView : public tyga::WindowViewDelegate
 {
 public:
@@ -127,6 +134,8 @@ private:
 												);
 	void CreateTweakBar();
 private:
+
+	RenderFlags									m_flags;
 
 	struct {
 		GLuint frameBuffer;

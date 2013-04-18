@@ -21,6 +21,7 @@ uniform mat4 light_projection_xform;
 uniform vec3 camera_position;
 
 uniform int cast_shadows;
+uniform int enableShadowPCF;
 uniform float oneOverShadowMapSize;
 
 out vec3 fragment_colour;
@@ -50,6 +51,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 
 	// buda: 8 : 11
 	// rabbit 8 : 8
+	// dragon 5 : 7.5
 
 	float lightPow = 5;
 	float distExp = 7.5;
@@ -71,9 +73,9 @@ vec3 Shadow(vec4 worldPosition)
 
     vec2 shadow_texcoord = vec2(xCoord, yCoord);
 
-	const float bias = 0.0002f;
-	const int level_of_filtering = 1;
-	const int kernal = 1;
+	const float bias = 0.025f;
+	int level_of_filtering = enableShadowPCF * 1;
+	int kernal = 1;
 
 	float shadowing = 0.0f;
     float count = 0.0f;
@@ -82,7 +84,7 @@ vec3 Shadow(vec4 worldPosition)
         for( int y = -level_of_filtering; y <= level_of_filtering; y += kernal )
 		{
 			float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord + vec2(x * oneOverShadowMapSize, y * oneOverShadowMapSize)).x;
-			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.5f : 1.0f;
+			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.4f : 1.0f;
 			count += 1.0f;
 		}
 	}

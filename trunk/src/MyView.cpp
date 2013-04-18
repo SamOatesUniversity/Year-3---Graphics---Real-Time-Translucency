@@ -13,6 +13,10 @@ MyView()
 	m_lbuffer.frameBuffer = NULL;
 	m_shadowbuffer.frameBuffer = NULL;
 	m_gfxCard = GFXCardType::UNKNOWN;
+
+	m_flags.enableShadows = true;
+	m_flags.enableShadowPCF = true;
+	m_flags.respectShadowFlag = true;
 }
 
 MyView::
@@ -328,6 +332,8 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	{
 		m_light.push_back(new Light(scene_->light(lightIndex)));
 	}
+	m_light[0]->NearPlane = 100.0f;
+	m_light[1]->NearPlane = 100.0f;
 
 	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	if (gfxCard.find("ATI") != std::string::npos) {
@@ -511,7 +517,7 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
     glViewport(0, 0, width, height);
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
-	CreateShadowBuffer(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+	CreateShadowBuffer(ShadowMapToInt(), ShadowMapToInt());
 	TwWindowSize(width, height);
 }
 
@@ -549,6 +555,12 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 void MyView::
 windowViewRender(std::shared_ptr<tyga::Window> window)
 {
+	if (Light::OldShadowMapSize != Light::ShadowMapSize)
+	{
+		CreateShadowBuffer(ShadowMapToInt(), ShadowMapToInt());
+		Light::OldShadowMapSize = Light::ShadowMapSize;
+	}
+
     assert(scene_ != nullptr);
 
 	GLint viewport_size[4];
@@ -811,14 +823,19 @@ void MyView::DrawSpotLights(
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 	
-	//for (unsigned int lightIndex = 2; lightIndex < 5; ++lightIndex)
+	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
 	{
-		const int lightIndex = 4;
+		//const int lightIndex = 4;
 		Light *const light = m_light[lightIndex];
+		if (!light->Enabled)
+		{
+			continue;
+		}
+
 		light->Update(scene_->light(lightIndex));
 		light->CalculateWorldMatrix(scene_->upDirection());
 
-		const bool castShadow = true;//  scene_->light(lightIndex).casts_shadows;
+		const bool castShadow = m_flags.enableShadows && (!m_flags.respectShadowFlag || scene_->light(lightIndex).casts_shadows);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowbuffer.frameBuffer);
 		glViewport(0, 0, (GLint)m_shadowbuffer.size.x, (GLint)m_shadowbuffer.size.y);
@@ -892,7 +909,7 @@ void MyView::DrawSpotLights(
 			glUniform1i(glGetUniformLocation(spotlight->GetProgram(), samplerName[textureIndex].c_str()), 4 + textureIndex);
 		}
 
-		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position, castShadow);
+		light->PerformLightPass(scene_->upDirection(), spotlight, view_xform, projection_xform, camera.position, castShadow, m_flags.enableShadowPCF);
 
 		// draw to the lbuffer
 		m_coneMesh.Draw();
@@ -913,4 +930,21 @@ void MyView::DrawSpotLights(
 void MyView::CreateTweakBar()
 {
 	m_lightbar.bar = TwNewBar("Lighting Settings");
+	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='240 210'");  
+
+	TwAddVarRW (m_lightbar.bar, "ToggleLight0", TW_TYPE_BOOLCPP, &m_light[0]->Enabled, "group=Lights label='Enable Light One'");
+	TwAddVarRW (m_lightbar.bar, "ToggleLight1", TW_TYPE_BOOLCPP, &m_light[1]->Enabled, "group=Lights label='Enable Light Two'");
+	TwAddVarRW (m_lightbar.bar, "ToggleLight2", TW_TYPE_BOOLCPP, &m_light[2]->Enabled, "group=Lights label='Enable Light Buddha'");
+	TwAddVarRW (m_lightbar.bar, "ToggleLight3", TW_TYPE_BOOLCPP, &m_light[3]->Enabled, "group=Lights label='Enable Light Rabbit'");
+	TwAddVarRW (m_lightbar.bar, "ToggleLight4", TW_TYPE_BOOLCPP, &m_light[4]->Enabled, "group=Lights label='Enable Light Dragon'");
+
+	TwAddVarRW (m_lightbar.bar, "ToggleShadows", TW_TYPE_BOOLCPP, &m_flags.enableShadows, "group=Shadows label='Enable Shadows'");
+	TwAddVarRW (m_lightbar.bar, "TogglePCF",	 TW_TYPE_BOOLCPP, &m_flags.enableShadowPCF, "group=Shadows label='Enable PCF'");
+
+	TwEnumVal shadowMapEV[] = { {ShadowMapSize128, "128x128"}, {ShadowMapSize256, "256x256"}, {ShadowMapSize512, "512x512"}, {ShadowMapSize1024, "1024x1024"}, {ShadowMapSize2048, "2048x2048"}, {ShadowMapSize4096, "4096x4096"} };
+	TwType ShadowMapSizeEnum = TwDefineEnum("ShadowMapSizeEnum", shadowMapEV, 6);
+	TwAddVarRW(m_lightbar.bar, "ShadowMapSize", ShadowMapSizeEnum, &Light::ShadowMapSize, "group=Shadows label='Texture Size'");
+
+	TwAddVarRW (m_lightbar.bar, "ToggleRespectShadow", TW_TYPE_BOOLCPP, &m_flags.respectShadowFlag, "group=Shadows label='Respect Shadow Flag'");
+	
 }
