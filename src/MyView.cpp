@@ -498,6 +498,9 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	 glGenFramebuffers(1, &m_shadowbuffer.frameBuffer);
 	 glGenTextures(TranslucencyTexture::noof, m_shadowbuffer.texture);
 	 glGenTextures(1, &m_shadowbuffer.depth);
+
+	 TwInit(TW_OPENGL_CORE, NULL);
+	 CreateTweakBar();
 }
 
 void MyView::
@@ -509,11 +512,14 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 	CreateGBuffer(width, height);
 	CreateLBuffer(width, height);
 	CreateShadowBuffer(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+	TwWindowSize(width, height);
 }
 
 void MyView::
 windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
+	TwTerminate();
+
 	for (Light *light : m_light)
 	{
 		delete light;
@@ -558,6 +564,9 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	// POST PROCESSING
 	PerformPostProcessing();
+
+	// Render the debug overlay
+	TwDraw();
 }
 
 float GetMaterialIndexFromColor(
@@ -899,4 +908,9 @@ void MyView::DrawSpotLights(
 	glUseProgram(0);
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void MyView::CreateTweakBar()
+{
+	m_lightbar.bar = TwNewBar("Lighting Settings");
 }

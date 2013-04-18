@@ -14,6 +14,7 @@
 #include <memory>
 #include <map>
 
+#include <AntTweakBar.h>
 //#include <vld.h>
 
 class MyScene;
@@ -124,7 +125,7 @@ private:
 	void										BindGBufferTextures(
 													const Shader *const shader						//!< A pointer to the shader of the samplers to bind
 												);
-
+	void CreateTweakBar();
 private:
 
 	struct {
@@ -174,5 +175,9 @@ private:
 	};
 
 	ProFy::TimerID								m_timer[Timer::Noof];
+
+	struct {
+		TwBar *bar;
+	}											m_lightbar;
 
 };
