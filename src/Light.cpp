@@ -1,7 +1,11 @@
 #include "Light.h"
 
+eShadowMapSize Light::ShadowMapSize = ShadowMapSize512;
+eShadowMapSize Light::OldShadowMapSize = ShadowMapSize;
 
-Light::Light( MyScene::Light &light )
+Light::Light( MyScene::Light &light ) :
+		Enabled(true),
+		NearPlane(1.0f)
 {
 	m_light = light;
 }
@@ -26,7 +30,7 @@ void Light::CalculateWorldMatrix(glm::vec3 sceneUp)
 	m_lightprojection = glm::perspective(
 		m_light.field_of_view_degrees,
 		1.0f,
-		0.1f,
+		NearPlane,
 		m_light.range
 	);
 
@@ -57,7 +61,15 @@ void Light::PerformShadowPass(
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "worldMatrix"), 1, GL_FALSE, &xform[0][0]);	
 }
 
-void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm::mat4 view_xform, glm::mat4 projection_xform, glm::vec3 camera_position, const bool castShadows)
+void Light::PerformLightPass(
+		glm::vec3 sceneUp, 
+		const Shader *const shader, 
+		glm::mat4 view_xform, 
+		glm::mat4 projection_xform, 
+		glm::vec3 camera_position, 
+		const bool castShadows, 
+		const bool enableShadowPCF
+	)
 {
 	// Instantiate our uniforms
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "camera_position"), 1, glm::value_ptr(camera_position));	
@@ -70,7 +82,8 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 	glUniformMatrix4fv(glGetUniformLocation(shader->GetProgram(), "light_projection_xform"), 1, GL_FALSE, &m_lightprojection[0][0]);
 	
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "cast_shadows"), castShadows);	
-	glUniform1f(glGetUniformLocation(shader->GetProgram(), "oneOverShadowMapSize"), ONE_OVER_SHADOW_MAP_SIZE);
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "enableShadowPCF"), enableShadowPCF);	
+	glUniform1f(glGetUniformLocation(shader->GetProgram(), "oneOverShadowMapSize"), 1.0f / ShadowMapToInt());
 
 	// set the current point lights data
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_range"), m_light.range);				
@@ -82,4 +95,10 @@ void Light::PerformLightPass( glm::vec3 sceneUp, const Shader *const shader, glm
 void Light::Update( const MyScene::Light &light )
 {
 	m_light = light;
+}
+
+int ShadowMapToInt()
+{
+	int result = 128 << Light::ShadowMapSize;
+	return result;
 }
