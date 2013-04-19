@@ -17,6 +17,8 @@ MyView()
 	m_flags.enableShadows = true;
 	m_flags.enableShadowPCF = true;
 	m_flags.respectShadowFlag = true;
+
+	m_debugbar.fps = 60;
 }
 
 MyView::
@@ -343,6 +345,7 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::FrameRenderTime], ProFy::TimerType::OpenGL, "Frame Render Time");
 
     assert(scene_ != nullptr);
 
@@ -563,6 +566,8 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
     assert(scene_ != nullptr);
 
+	ProFy::GetInstance().StartTimer(m_timer[Timer::FrameRenderTime]);
+
 	GLint viewport_size[4];
 	glGetIntegerv(GL_VIEWPORT, viewport_size);
 	const float aspect_ratio = viewport_size[2] / static_cast<float>(viewport_size[3]);
@@ -576,6 +581,9 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
 	// POST PROCESSING
 	PerformPostProcessing();
+
+	ProFy::GetInstance().EndTimer(m_timer[Timer::FrameRenderTime]);
+	m_debugbar.fps = static_cast<int>(1000.0f / ProFy::GetInstance().GetTimerResult(m_timer[Timer::FrameRenderTime]));
 
 	// Render the debug overlay
 	TwDraw();
@@ -929,8 +937,9 @@ void MyView::DrawSpotLights(
 
 void MyView::CreateTweakBar()
 {
+	// Create a bar to put all lighting settins on
 	m_lightbar.bar = TwNewBar("Lighting Settings");
-	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='240 210'");  
+	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='240 210' position='20 20'");  
 
 	TwAddVarRW (m_lightbar.bar, "ToggleLight0", TW_TYPE_BOOLCPP, &m_light[0]->Enabled, "group=Lights label='Enable Light One'");
 	TwAddVarRW (m_lightbar.bar, "ToggleLight1", TW_TYPE_BOOLCPP, &m_light[1]->Enabled, "group=Lights label='Enable Light Two'");
@@ -946,5 +955,11 @@ void MyView::CreateTweakBar()
 	TwAddVarRW(m_lightbar.bar, "ShadowMapSize", ShadowMapSizeEnum, &Light::ShadowMapSize, "group=Shadows label='Texture Size'");
 
 	TwAddVarRW (m_lightbar.bar, "ToggleRespectShadow", TW_TYPE_BOOLCPP, &m_flags.respectShadowFlag, "group=Shadows label='Respect Shadow Flag'");
+
+	// Create a bar to out put debug information...
+	m_debugbar.bar = TwNewBar("Debug Information");
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=fit size='240 210' position='20 250'");  
 	
+	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
+
 }

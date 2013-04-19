@@ -179,14 +179,19 @@ private:
 	struct Timer {
 		enum Enum {
 			ShaderLoadtime,
+			FrameRenderTime,
 			Noof
 		};
 	};
-
 	ProFy::TimerID								m_timer[Timer::Noof];
 
 	struct {
 		TwBar *bar;
 	}											m_lightbar;
+
+	struct {
+		TwBar *bar;
+		int fps;
+	}											m_debugbar;
 
 };
