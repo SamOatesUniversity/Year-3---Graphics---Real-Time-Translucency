@@ -179,7 +179,9 @@ private:
 	struct Timer {
 		enum Enum {
 			ShaderLoadtime,
-			FrameRenderTime,
+			GBufferCreation,
+			LBufferCreation,
+			PostProcessing,
 			Noof
 		};
 	};
@@ -192,6 +194,12 @@ private:
 	struct {
 		TwBar *bar;
 		int fps;
+		struct {
+			int wholeFrame;
+			int gbufferCreation;
+			int lbufferCreation;
+			int postProcessing;
+		} timer;
 	}											m_debugbar;
 
 };
