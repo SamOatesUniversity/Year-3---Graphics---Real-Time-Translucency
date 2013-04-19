@@ -345,7 +345,9 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::FrameRenderTime], ProFy::TimerType::OpenGL, "Frame Render Time");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::GBufferCreation], ProFy::TimerType::OpenGL, "GBuffer Creation");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBufferCreation], ProFy::TimerType::OpenGL, "LBuffer Creation");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::PostProcessing], ProFy::TimerType::OpenGL, "Post Processing");
 
     assert(scene_ != nullptr);
 
@@ -566,7 +568,7 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 
     assert(scene_ != nullptr);
 
-	ProFy::GetInstance().StartTimer(m_timer[Timer::FrameRenderTime]);
+	ProFy *const profy = &ProFy::GetInstance();
 
 	GLint viewport_size[4];
 	glGetIntegerv(GL_VIEWPORT, viewport_size);
@@ -574,16 +576,25 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
     const MyScene::Camera camera = scene_->camera();
     	
 	// POPULATE THE GBUFFER
+	profy->StartTimer(m_timer[Timer::GBufferCreation]);
 	RenderGBuffer(camera, aspect_ratio);
+	profy->EndTimer(m_timer[Timer::GBufferCreation]);
+	m_debugbar.timer.gbufferCreation =  profy->GetTimerResult(m_timer[Timer::GBufferCreation]);
 
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
+	profy->StartTimer(m_timer[Timer::LBufferCreation]);
 	RenderLBuffer(camera, aspect_ratio);
+	profy->EndTimer(m_timer[Timer::LBufferCreation]);
+	m_debugbar.timer.lbufferCreation =  profy->GetTimerResult(m_timer[Timer::LBufferCreation]);
 
 	// POST PROCESSING
+	profy->StartTimer(m_timer[Timer::PostProcessing]);
 	PerformPostProcessing();
+	profy->EndTimer(m_timer[Timer::PostProcessing]);
+	m_debugbar.timer.postProcessing =  profy->GetTimerResult(m_timer[Timer::PostProcessing]);
 
-	ProFy::GetInstance().EndTimer(m_timer[Timer::FrameRenderTime]);
-	m_debugbar.fps = static_cast<int>(1000.0f / ProFy::GetInstance().GetTimerResult(m_timer[Timer::FrameRenderTime]));
+	m_debugbar.timer.wholeFrame = m_debugbar.timer.gbufferCreation + m_debugbar.timer.lbufferCreation + m_debugbar.timer.postProcessing; 
+	m_debugbar.fps = static_cast<int>(1000.0f / m_debugbar.timer.wholeFrame);
 
 	// Render the debug overlay
 	TwDraw();
@@ -958,8 +969,12 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=fit size='240 210' position='20 250'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=fit size='240 150' position='20 250'");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
+	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_INT8, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
+	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_INT8, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferCreation", TW_TYPE_INT8, &m_debugbar.timer.lbufferCreation, "group=Timers label='Lbuffer Render (ms)'");
+	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_INT8, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
 }
