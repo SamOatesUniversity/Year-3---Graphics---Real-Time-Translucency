@@ -24,7 +24,6 @@ struct GBufferTexture {
 		position,
 		normal,
 		material,
-		tangents,
 		noof
 	};
 };

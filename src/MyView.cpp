@@ -199,7 +199,7 @@ void MyView::CreateGBuffer(
 	// setup colour buffers
 	for (unsigned int textureIndex = 0; textureIndex < GBufferTexture::noof; ++textureIndex) {
 		glBindTexture(GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex]);
-		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + textureIndex, GL_TEXTURE_RECTANGLE, m_gbuffer.texture[textureIndex], 0);
 		drawBufs[textureIndex] = GL_COLOR_ATTACHMENT0 + textureIndex;
 	}
@@ -686,8 +686,6 @@ void MyView::RenderGBuffer(
 		glUniform1i(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), model.material_index);
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
 
-		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "TIME"), static_cast<float>(time + modelIndex));
-
 		// draw the mesh
 		mesh.Draw();		
 	}
@@ -773,11 +771,6 @@ void MyView::BindGBufferTextures(
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::material]);
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_material_info"), 2);
-
-	// Pass in our gbuffer material information texture
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_RECTANGLE,  m_gbuffer.texture[GBufferTexture::tangents]);
-	glUniform1i(glGetUniformLocation(shader->GetProgram(), "sampler_world_tangent"), 3);
 }
 
 /*
