@@ -195,10 +195,10 @@ private:
 		TwBar *bar;
 		int fps;
 		struct {
-			int wholeFrame;
-			int gbufferCreation;
-			int lbufferCreation;
-			int postProcessing;
+			float wholeFrame;
+			float gbufferCreation;
+			float lbufferCreation;
+			float postProcessing;
 		} timer;
 	}											m_debugbar;
 
