@@ -4,7 +4,7 @@ uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;  
 uniform mat4 worldMatrix;  
 
-uniform float materialIndex;
+uniform int materialIndex;
 uniform float materialShininess; 
 
 uniform float TIME;

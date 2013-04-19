@@ -332,8 +332,8 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	{
 		m_light.push_back(new Light(scene_->light(lightIndex)));
 	}
-	m_light[0]->NearPlane = 100.0f;
-	m_light[1]->NearPlane = 100.0f;
+	m_light[0]->NearPlane = 10.0f;
+	m_light[1]->NearPlane = 10.0f;
 
 	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	if (gfxCard.find("ATI") != std::string::npos) {
@@ -665,7 +665,7 @@ void MyView::RenderGBuffer(
 
 		// Set the material data
 		const MyScene::Material mat = scene_->material(model.material_index);
-		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), GetMaterialIndexFromColor(mat.colour));
+		glUniform1i(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), model.material_index);
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
 
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "TIME"), static_cast<float>(time + modelIndex));

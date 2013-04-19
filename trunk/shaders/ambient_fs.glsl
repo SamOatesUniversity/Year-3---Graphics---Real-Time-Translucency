@@ -14,18 +14,41 @@ out vec3 reflected_light;
 
 vec3 GetMaterialColorFromID(float materialIndex)
 {
-	// curtains
-	if (materialIndex > 0.15f && materialIndex < 0.25f)
-		return vec3(1.0f, 0.0f, 0.0f);
+	if (materialIndex > -0.1f && materialIndex < 0.1f)
+	{
+		return vec3(0.8f, 0.8f, 0.8f);
+	}
 
-	// plants
-	if (materialIndex > 0.25f && materialIndex < 0.35f)
+	if (materialIndex > 0.9f && materialIndex < 1.1f)
+	{
+		return vec3(1.f, 0.33f, 0.f);
+	}
+
+	if (materialIndex > 1.9f && materialIndex < 2.1f)
+	{
 		return vec3(0.2f, 0.8f, 0.2f);
+	}
 
-	// poles
-	if (materialIndex > 0.35f && materialIndex < 0.45f)
+	if (materialIndex > 2.9f && materialIndex < 3.1f)
+	{
 		return vec3(0.8f, 0.8f, 0.2f);
+	}
 
+	if (materialIndex > 3.9f && materialIndex < 4.1f)
+	{
+		return vec3(0.8f, 0.4f, 0.4f);
+	}
+
+	if (materialIndex > 4.9f && materialIndex < 5.1f)
+	{
+		return vec3(0.4f, 0.8f, 0.4f);
+	}
+
+	if (materialIndex > 5.9f && materialIndex < 6.1f)
+	{
+		return vec3(0.4f, 0.4f, 0.8f);
+	}
+	
 	return vec3(0.8f, 0.8f, 0.8f);
 }
 
