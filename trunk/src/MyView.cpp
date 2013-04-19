@@ -19,6 +19,7 @@ MyView()
 	m_flags.respectShadowFlag = true;
 
 	m_debugbar.fps = 60;
+	m_debugbar.timer.gbufferCreation = 0.0f;
 }
 
 MyView::
@@ -553,8 +554,6 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 
 	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
 	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
-
-	ProFy::GetInstance().OutputTimer(m_timer[Timer::ShaderLoadtime], false);
 }
 
 void MyView::
@@ -950,7 +949,7 @@ void MyView::CreateTweakBar()
 {
 	// Create a bar to put all lighting settins on
 	m_lightbar.bar = TwNewBar("Lighting Settings");
-	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='240 210' position='20 20'");  
+	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='260 210' position='20 20'");  
 
 	TwAddVarRW (m_lightbar.bar, "ToggleLight0", TW_TYPE_BOOLCPP, &m_light[0]->Enabled, "group=Lights label='Enable Light One'");
 	TwAddVarRW (m_lightbar.bar, "ToggleLight1", TW_TYPE_BOOLCPP, &m_light[1]->Enabled, "group=Lights label='Enable Light Two'");
@@ -969,12 +968,12 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=fit size='240 150' position='20 250'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='260 150' position='20 250'");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
-	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_INT8, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
-	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_INT8, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
-	TwAddVarRO (m_debugbar.bar, "LBufferCreation", TW_TYPE_INT8, &m_debugbar.timer.lbufferCreation, "group=Timers label='Lbuffer Render (ms)'");
-	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_INT8, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
+	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
+	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferCreation, "group=Timers label='Lbuffer Render (ms)'");
+	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_FLOAT, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
 }
