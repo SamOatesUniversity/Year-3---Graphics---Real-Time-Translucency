@@ -21,7 +21,7 @@ void Light::CalculateWorldMatrix(glm::vec3 sceneUp)
 	xform[2][0] = m_light.direction.x;	xform[2][1] = m_light.direction.y;	xform[2][2] = m_light.direction.z;	xform[1][3] = 0;
 	xform[3][0] = m_light.position.x;	xform[3][1] = m_light.position.y;	xform[3][2] = m_light.position.z;	xform[3][3] = 1;
 
-	xform = glm::scale(xform, glm::vec3(m_light.range, m_light.range, m_light.range));
+	xform = glm::scale(xform, glm::vec3(m_light.range * 2, m_light.range * 2, m_light.range * 2));
 
 	// store the light world matrix
 	m_lightxform = xform;

@@ -12,8 +12,8 @@ out vec4 lvpVertexNormal;
 
 void main(void)
 {
-	lvpVertexNormal = worldMatrix * vec4(normalize(vertex_normal), 0.0f);
-	lvpVertexNormal = viewMatrix * lvpVertexNormal;
+	lvpVertexNormal = vec4(normalize(vertex_normal), 0.0f);
+	lvpVertexNormal = worldMatrix * lvpVertexNormal;
 
     lvpVertexPosition = worldMatrix * vec4(vertex_position, 1.0f);
 	lvpVertexPosition = viewMatrix * lvpVertexPosition;
