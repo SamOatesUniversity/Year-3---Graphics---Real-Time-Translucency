@@ -81,7 +81,7 @@ float CalculateTransferFunction(vec4 worldPosition, vec3 worldNormal)
 
 	float Rd = dot(Rvec, surfaceNormal);
 
-	return pow(Rd, 1);
+	return Rd;
 }
 
 vec3 GetIrradianceAtInPoint(vec4 worldPosition)
@@ -98,7 +98,9 @@ vec3 GetIrradianceAtInPoint(vec4 worldPosition)
 vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 direction, float cone, float maxrange, vec3 colour)
 {
     vec3 lightlength = position - worldPosition.xyz;
-    const float intensity = 0.75f;
+	vec3 L = normalize( lightlength );
+
+    const float intensity = 0.5f;
 
 	vec3 BXout = vec3(0, 0, 0);
 
@@ -107,8 +109,8 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	BXout = clamp(EXin * Rd, 0, 1);
 
 	vec3 LXout = BXout;
-
-    vec3 L = normalize( lightlength );
+	//float LXout = clamp(dot(L, worldNormal), 0, 1);
+    
     float spotLight = dot(-L, direction);
 	float fatt = smoothstep(0.0f, 1.0f, (spotLight - cos(cone * 0.5f)) * 15.0f) * intensity;
     vec3 lighting = (spotLight > cos(cone)) ? colour * LXout * fatt : vec3(0.0f, 0.0f, 0.0f);
