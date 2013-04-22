@@ -685,7 +685,8 @@ void MyView::RenderGBuffer(
 		const MyScene::Material mat = scene_->material(model.material_index);
 		glUniform1i(glGetUniformLocation(gbuffer->GetProgram(), "materialIndex"), model.material_index);
 		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialShininess"), mat.shininess);
-
+		glUniform1f(glGetUniformLocation(gbuffer->GetProgram(), "materialTrans"), mat.translucency);
+		
 		// draw the mesh
 		mesh.Draw();		
 	}
