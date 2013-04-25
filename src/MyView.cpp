@@ -743,6 +743,7 @@ void MyView::PerformPostProcessing()
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glUniform1i(glGetUniformLocation(postprocessing->GetProgram(), "sampler_pixel"), 0);
+	glUniform2fv(glGetUniformLocation(postprocessing->GetProgram(), "texcoordOffset"), 1, glm::value_ptr(glm::vec2(1.0f / m_lbuffer.size.x, 1.0f / m_lbuffer.size.y)));
 
 	glBindVertexArray(m_meshQuad.getVAO());
 	glDrawArrays(GL_TRIANGLE_FAN, 0, m_meshQuad.GetNoofVertices());
