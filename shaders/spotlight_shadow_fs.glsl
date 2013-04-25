@@ -19,8 +19,8 @@ vec4 CalculateIrradiance()
 	vec3 Win = normalize(lightToPoint);				// Incoming direction vector
 
 	// Ft (n, win)
-	const float n1 = 1.0f;
-	const float n2 = 1.55f; // MAGIC NUMBER! that represents the material of the object (kinda)
+	const float n1 = 0.8f;
+	const float n2 = 5.0f; // MAGIC NUMBER! that represents the material of the object (kinda)
 	float r0 = pow((n1 - n2) / (n1 + n2), 2.0f);
 	float schlick = r0 + (1.0f - r0) * pow(1 - dot(Win, Nxin), 5.0f);
 

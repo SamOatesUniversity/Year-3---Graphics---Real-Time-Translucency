@@ -353,8 +353,10 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::GBufferCreation], ProFy::TimerType::OpenGL, "GBuffer Creation");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBufferCreation], ProFy::TimerType::OpenGL, "LBuffer Creation");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::GBufferCreation], ProFy::TimerType::OpenGL, "GBuffer Render");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_DirectionalLight], ProFy::TimerType::OpenGL, "LBuffer Directional Light");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass], ProFy::TimerType::OpenGL, "LBuffer Spot Light First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass], ProFy::TimerType::OpenGL, "LBuffer Spot Light Second Pass");
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::PostProcessing], ProFy::TimerType::OpenGL, "Post Processing");
 
     assert(scene_ != nullptr);
@@ -537,6 +539,14 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 void MyView::
 windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
+	std::vector<ProFy::TimerID> timerIDs;
+	timerIDs.push_back(m_timer[Timer::GBufferCreation]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_DirectionalLight]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+	timerIDs.push_back(m_timer[Timer::PostProcessing]);
+	ProFy::GetInstance().OutputTimers("AverageFrameTimes", timerIDs, GraphType::Pie, false); 
+	
 	TwTerminate();
 
 	for (Light *light : m_light)
@@ -585,21 +595,18 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	profy->StartTimer(m_timer[Timer::GBufferCreation]);
 	RenderGBuffer(camera, aspect_ratio);
 	profy->EndTimer(m_timer[Timer::GBufferCreation]);
-	m_debugbar.timer.gbufferCreation =  profy->GetTimerResult(m_timer[Timer::GBufferCreation]);
+	m_debugbar.timer.gbufferCreation = profy->GetTimerResult(m_timer[Timer::GBufferCreation]);
 
 	// RENDER TO THE LBUFFER FROM THE GBUFFER DATA
-	profy->StartTimer(m_timer[Timer::LBufferCreation]);
 	RenderLBuffer(camera, aspect_ratio);
-	profy->EndTimer(m_timer[Timer::LBufferCreation]);
-	m_debugbar.timer.lbufferCreation =  profy->GetTimerResult(m_timer[Timer::LBufferCreation]);
 
 	// POST PROCESSING
 	profy->StartTimer(m_timer[Timer::PostProcessing]);
 	PerformPostProcessing();
 	profy->EndTimer(m_timer[Timer::PostProcessing]);
-	m_debugbar.timer.postProcessing =  profy->GetTimerResult(m_timer[Timer::PostProcessing]);
+	m_debugbar.timer.postProcessing = profy->GetTimerResult(m_timer[Timer::PostProcessing]);
 
-	m_debugbar.timer.wholeFrame = m_debugbar.timer.gbufferCreation + m_debugbar.timer.lbufferCreation + m_debugbar.timer.postProcessing; 
+	m_debugbar.timer.wholeFrame = m_debugbar.timer.gbufferCreation + m_debugbar.timer.lbufferdirectional + m_debugbar.timer.lbufferspotp1 + m_debugbar.timer.lbufferspotp2 + m_debugbar.timer.postProcessing; 
 	m_debugbar.fps = static_cast<int>(1000.0f / m_debugbar.timer.wholeFrame);
 
 	// Render the debug overlay
@@ -724,7 +731,10 @@ void MyView::RenderLBuffer(
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// Render the directional light 
+	ProFy::GetInstance().StartTimer(m_timer[Timer::LBuffer_DirectionalLight]);
 	DrawDirectionalLight(camera);
+	ProFy::GetInstance().EndTimer(m_timer[Timer::LBuffer_DirectionalLight]);
+	m_debugbar.timer.lbufferdirectional = ProFy::GetInstance().GetTimerResult(m_timer[Timer::LBuffer_DirectionalLight]);
 
 	// Draw the point lights in the scene
 	DrawSpotLights(camera, aspect_ratio);
@@ -842,17 +852,22 @@ void MyView::DrawSpotLights(
 
 	const Shader *const spotlight = m_shader["spotlight"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
+
+	ProFy *profy = &ProFy::GetInstance();
+
+	m_debugbar.timer.lbufferspotp2 = m_debugbar.timer.lbufferspotp1 = 0.0f;
 	
-	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	int lightIndex = 0;
+	for (Light *light : m_light)
 	{
-		//const int lightIndex = 4;
-		Light *const light = m_light[lightIndex];
 		if (!light->Enabled)
 		{
 			continue;
 		}
 
-		light->Update(scene_->light(lightIndex));
+		profy->StartTimer(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+
+		light->Update(scene_->light(lightIndex++));
 		light->CalculateWorldMatrix(scene_->upDirection());
 
 		const bool castShadow = m_flags.enableShadows && (!m_flags.respectShadowFlag || scene_->light(lightIndex).casts_shadows);
@@ -895,7 +910,12 @@ void MyView::DrawSpotLights(
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 
+		profy->EndTimer(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+		m_debugbar.timer.lbufferspotp1 += profy->GetTimerResult(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+
 		///////////////////////////////////////////////////////
+
+		profy->StartTimer(m_timer[Timer::LBuffer_SpotLightSecondPass]);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 		glViewport(0, 0, (GLint)m_lbuffer.size.x, (GLint)m_lbuffer.size.y);
@@ -938,6 +958,9 @@ void MyView::DrawSpotLights(
 		glDisable(GL_BLEND);
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
+
+		profy->EndTimer(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+		m_debugbar.timer.lbufferspotp2 += profy->GetTimerResult(m_timer[Timer::LBuffer_SpotLightSecondPass]);
 	}		
 	
 
@@ -975,7 +998,9 @@ void MyView::CreateTweakBar()
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
 	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
-	TwAddVarRO (m_debugbar.bar, "LBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferCreation, "group=Timers label='Lbuffer Render (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferDirectionalLight", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferdirectional, "group=Timers label='Lbuffer Directional Light (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP1", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp1, "group=Timers label='Lbuffer Spot Light First Pass (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP2", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp2, "group=Timers label='Lbuffer Spot Light Second Pass (ms)'");
 	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_FLOAT, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
 }
