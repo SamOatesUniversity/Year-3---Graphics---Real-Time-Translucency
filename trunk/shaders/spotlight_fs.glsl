@@ -149,7 +149,7 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 
 	float Rd = res0 * (res1 + res2);
 
-	return vec3(Rd);
+	return vec3(Rd * 5000000.0f);
 }
 
 vec3 CalculateTranslucentOutput(vec3 worldNormal, vec3 wout, vec3 bxOut)
@@ -164,7 +164,7 @@ vec3 CalculateTranslucentOutput(vec3 worldNormal, vec3 wout, vec3 bxOut)
 
 	vec3 res = piOverOne * clamp(schlick, 0.0f, 1.0f) * bxOut;
 
-	return res * 1000000.0f;
+	return res;
 }
 
 vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 direction, float cone, float maxrange, vec3 colour, bool translucent)
