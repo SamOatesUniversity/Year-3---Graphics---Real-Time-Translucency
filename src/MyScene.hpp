@@ -27,6 +27,9 @@ public:
     void
     update();
 
+    bool
+    toggleCameraAnimation();
+
     float
     time() const;
 
@@ -112,6 +115,8 @@ private:
 
     std::chrono::system_clock::time_point start_time_;
     float time_seconds_;
+
+    bool animate_camera_;
 
     std::shared_ptr<FirstPersonMovement> camera_;
     glm::vec3 camera_translation_speed_;

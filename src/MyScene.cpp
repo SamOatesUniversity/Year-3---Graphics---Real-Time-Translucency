@@ -14,6 +14,7 @@ MyScene()
                   << std::endl;
     }
 
+    animate_camera_ = false;
     camera_.reset(new FirstPersonMovement());
     camera_->init(glm::vec3(80, 50, 0), 1.5f, 0.5f);
 }
@@ -142,10 +143,18 @@ update()
     time_seconds_ = 0.001f * clock_millisecs.count();
     const float dt = time_seconds_ - prev_time;
 
-    camera_->moveForward(camera_translation_speed_.z * dt);
-    camera_->moveRight(camera_translation_speed_.x * dt);
-    camera_->spinHorizontal(camera_rotation_speed_.x * dt);
-    camera_->spinVertical(camera_rotation_speed_.y * dt);
+    if (!animate_camera_) {
+        camera_->moveForward(camera_translation_speed_.z * dt);
+        camera_->moveRight(camera_translation_speed_.x * dt);
+        camera_->spinHorizontal(camera_rotation_speed_.x * dt);
+        camera_->spinVertical(camera_rotation_speed_.y * dt);
+    }
+}
+
+bool MyScene::
+toggleCameraAnimation()
+{
+    return animate_camera_ = !animate_camera_;
 }
 
 float MyScene::
@@ -170,8 +179,23 @@ MyScene::Camera MyScene::
 camera() const
 {
     Camera cam;
-    cam.position = camera_->position();
-    cam.direction = camera_->direction();
+    if (animate_camera_) {
+        const float t = -0.3f * time_seconds_;
+        const float ct = cosf(t);
+        const float rx = ct < 0 ? -120.f : 120.f;
+        const float st = sinf(t);
+        const float rz = st < 0 ? -20.f : 20.f;
+        const float m = 0.1f;
+        const float ry = st < 0 ? -30.f : 30.f;
+        glm::vec3 look_at(0, 30, 0);
+        cam.position = glm::vec3(rx * powf(fabs(ct), m),
+                                 50 + ry * powf(fabs(st), m),
+                                 25.f + rz * powf(fabs(st), m));
+        cam.direction = glm::normalize(look_at - cam.position);
+    } else {
+        cam.position = camera_->position();
+        cam.direction = camera_->direction();
+    }
     cam.vertical_field_of_view_degrees = 75.f;
     cam.near_plane_distance = 1.f;
     cam.far_plane_distance = 1000.f;

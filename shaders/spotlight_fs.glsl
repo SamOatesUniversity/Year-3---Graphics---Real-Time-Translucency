@@ -149,7 +149,7 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 
 	float Rd = res0 * (res1 + res2);
 
-	return vec3(Rd * 5000000.0f);
+	return vec3(Rd * 2000000.0f);
 }
 
 vec3 CalculateTranslucentOutput(vec3 worldNormal, vec3 wout, vec3 bxOut)
