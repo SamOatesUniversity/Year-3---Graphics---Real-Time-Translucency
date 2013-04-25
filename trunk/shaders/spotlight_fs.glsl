@@ -133,7 +133,7 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 	float zr = 1 / sigmaPrimeExtinction;													// Zr
 	float dr = sqrt(pow(r, 2) + pow(zr, 2));												// dr
 
-	float res1 = zr * (otr + (1 / dr)) * (pow(e, -(otr * dr)) / pow(dr, 1));
+	float res1 = zr * (otr + (1 / dr)) * (pow(e, -(otr * dr)) / pow(dr, 2));
 
 	///////////////////////////////////////////////////////////
 
@@ -143,13 +143,28 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 	float zv = zr * (1 + ((4 * A) / 3));
 	float dv = sqrt(pow(r, 2) + pow(zv, 2));
 
-	float res2 = zv * (otr + (1 / dv)) * (pow(e, -(otr * dv)) / pow(dv, 1));
+	float res2 = zv * (otr + (1 / dv)) * (pow(e, -(otr * dv)) / pow(dv, 2));
 
 	///////////////////////////////////////////////////////////
 
 	float Rd = res0 * (res1 + res2);
 
-	return vec3(Rd * 10000.0f);
+	return vec3(Rd);
+}
+
+vec3 CalculateTranslucentOutput(vec3 worldNormal, vec3 wout, vec3 bxOut)
+{
+	const float piOverOne = 0.31830988618379067153776752674503f;
+
+	// Ft (n, win)
+	const float n1 = 1.55f;
+	const float n2 = 1.0f;
+	float r0 = pow((n1 - n2) / (n1 + n2), 2.0f);
+	float schlick = r0 + (1.0f - r0) * pow(1 - dot(wout, -worldNormal), 5.0f);
+
+	vec3 res = piOverOne * clamp(schlick, 0.0f, 1.0f) * bxOut;
+
+	return res * 1000000.0f;
 }
 
 vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 direction, float cone, float maxrange, vec3 colour, bool translucent)
@@ -177,9 +192,11 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 				vec2 sampleOffset = sampleCoords + vec2(xOffset * oneOverShadowMapSize, yOffset * oneOverShadowMapSize);
 				
 				vec3 xout = worldPosition.xyz;
+				vec3 wout = normalize(camera_position - xout);
 				vec3 bxOut = CalculateTransformFunction(xout, sampleOffset);
-								
-				lighting += (spotLight > cos(cone)) ? colour * bxOut * fatt : vec3(0.0f, 0.0f, 0.0f);
+				vec3 Lout = CalculateTranslucentOutput(worldNormal, wout, bxOut);
+
+				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(0.0f, 0.0f, 0.0f);
 
 				count++;
 			}
