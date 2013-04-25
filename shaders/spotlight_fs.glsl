@@ -111,8 +111,8 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 	vec4 surfaceNormal = GetSurfaceNormal(sampleOffset);
 	vec4 depth = GetDepth(sampleOffset);
 
-	const float sigmaScattering = 1.6f;														// os
-	const float sigmaAbsorbant = 0.0000001f;												// oa
+	const float sigmaScattering = 1.3f;														// os
+	const float sigmaAbsorbant = 0.00000000000000001f;										// oa
 
 	const float g = 0.1f;																	// g
 	float sigmaPrimeScattering = (1 - g) * sigmaScattering;									// o's
@@ -128,22 +128,26 @@ vec3 CalculateTransformFunction(vec3 xout, vec2 sampleOffset)
 
 	///////////////////////////////////////////////////////////
 
+	float zr = 1 / sigmaPrimeExtinction;													// zr
 	float otr = sqrt(3 * sigmaAbsorbant * sigmaPrimeExtinction);							// otr
-	float r = length(xin.xyz - xout);
-	float zr = 1 / sigmaPrimeExtinction;													// Zr
-	float dr = sqrt(pow(r, 2) + pow(zr, 2));												// dr
+	vec3 xr = xin.xyz - dot(vec3(zr), surfaceNormal.xyz);
+	float dr = length(xr - xout);															// dr
 
-	float res1 = zr * (otr + (1 / dr)) * (pow(e, -(otr * dr)) / pow(dr, 2));
+	float res1 = zr * ((otr * dr) + 1.0f) * (pow(e, -otr * dr) / (sigmaPrimeExtinction * pow(dr, 3)));
 
 	///////////////////////////////////////////////////////////
 
 	const float n = 1.55f;
 	float Fdr = (-1.440 / pow(n, 2)) + (0.710 / n) + 0.0668 + (0.0636 * n);
-	float A = (1 + Fdr) / (1 - Fdr);
-	float zv = zr * (1 + ((4 * A) / 3));
-	float dv = sqrt(pow(r, 2) + pow(zv, 2));
 
-	float res2 = zv * (otr + (1 / dv)) * (pow(e, -(otr * dv)) / pow(dv, 2));
+	float D = 1.0f / (3.0f * sigmaPrimeExtinction);
+	float A = (1 + Fdr) / (1 - Fdr);
+	float zv = zr + (4 * A * D);
+
+	vec3 xv = xin.xyz + dot(vec3(zv), surfaceNormal.xyz);
+	float dv = length(xv - xout);
+
+	float res2 = zv * ((otr * dv) + 1.0f) * (pow(e, -otr * dv) / (sigmaPrimeExtinction * pow(dv, 3)));
 
 	///////////////////////////////////////////////////////////
 
@@ -181,7 +185,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	{
 		int count = 0;
 		const int sampleSize = 0;
-		const int sampleKernel = 16;
+		const int sampleKernel = 2;
 
 		vec2 sampleCoords = GetLightViewCoords(worldPosition);
 
