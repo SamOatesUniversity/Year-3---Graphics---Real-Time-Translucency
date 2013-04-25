@@ -179,7 +179,9 @@ private:
 		enum Enum {
 			ShaderLoadtime,
 			GBufferCreation,
-			LBufferCreation,
+			LBuffer_DirectionalLight,
+			LBuffer_SpotLightFirstPass,
+			LBuffer_SpotLightSecondPass,
 			PostProcessing,
 			Noof
 		};
@@ -196,7 +198,9 @@ private:
 		struct {
 			float wholeFrame;
 			float gbufferCreation;
-			float lbufferCreation;
+			float lbufferdirectional;
+			float lbufferspotp1;
+			float lbufferspotp2;
 			float postProcessing;
 		} timer;
 	}											m_debugbar;
