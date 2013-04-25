@@ -37,6 +37,7 @@ setScene(std::shared_ptr<const MyScene> scene)
 */
 void MyView::reloadShaders()
 {
+	system("cls");
 	for (std::map<char*, Shader*>::iterator shaderIt = m_shader.begin(); shaderIt != m_shader.end(); ++shaderIt)
 	{
 		delete (*shaderIt).second;
@@ -51,6 +52,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the ambiant shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
@@ -73,6 +75,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the pointlight shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
@@ -95,6 +98,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the spotlight shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
@@ -117,6 +121,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the spotlight shadow shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
@@ -140,6 +145,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the gbuffer shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
@@ -165,6 +171,7 @@ void MyView::reloadShaders()
 	{
 		std::cout << "Failed to load the post processing shader!" << std::endl;
 		system("PAUSE");
+		reloadShaders();
 	}
 	else
 	{
