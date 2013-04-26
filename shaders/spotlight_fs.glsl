@@ -10,6 +10,7 @@ uniform sampler2D sampler_irradiance_map;
 uniform sampler2D sampler_surfacenormal_map;
 uniform sampler2D sampler_worldpos_map;
 
+uniform vec4 spotlight_color;
 uniform vec3 spotlight_position;
 uniform float spotlight_range;
 uniform vec3 spotlight_direction;
@@ -217,7 +218,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 		lighting = (spotLight > cos(cone)) ? colour * clamp(dot(L, worldNormal), 0, 1) * fatt : vec3(0.0f, 0.0f, 0.0f);
 	}
 
-    return lighting;
+    return lighting * spotlight_color.xyz;
 }
 
 vec3 Shadow(vec4 worldPosition)
