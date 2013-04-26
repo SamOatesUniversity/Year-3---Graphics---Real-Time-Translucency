@@ -16,7 +16,6 @@ void main(void)
 	lvpVertexNormal = worldMatrix * lvpVertexNormal;
 
     lvpVertexPosition = worldMatrix * vec4(vertex_position, 1.0f);
-	lvpVertexPosition = viewMatrix * lvpVertexPosition;
-	lvpVertexPosition = projectionMatrix * lvpVertexPosition;
-	gl_Position = lvpVertexPosition;
+	gl_Position = viewMatrix * lvpVertexPosition;
+	gl_Position = projectionMatrix * gl_Position;
 }

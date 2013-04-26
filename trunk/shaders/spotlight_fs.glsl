@@ -111,8 +111,8 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 	vec4 surfaceNormal = GetSurfaceNormal(sampleOffset);
 	vec4 depth = GetDepth(sampleOffset);
 
-	const vec4 sigmaScattering = vec4(1.2f, 1.2f, 1.2f, 1.2f);								// os
-	const vec4 sigmaAbsorbant = vec4(0);													// oa
+	const vec4 sigmaScattering = vec4(1.5f, 1.5f, 1.5f, 1.5f);								// os
+	const vec4 sigmaAbsorbant = vec4(1);													// oa
 
 	const float g = 0.1f;																	// g
 	vec4 sigmaPrimeScattering = (1 - g) * sigmaScattering;									// o's
@@ -124,16 +124,12 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 
 	const float fourPi = 12.566370614359172953850573533118f;								//4pi
 
-	vec4 res0 = alphaPrime / fourPi;
-
 	///////////////////////////////////////////////////////////
 
 	vec4 zr = 1 / sigmaPrimeExtinction;														// zr
 	vec4 otr = sqrt(3 * sigmaAbsorbant * sigmaPrimeExtinction);								// otr
 	vec4 xr = xin - dot(zr, surfaceNormal);
 	float dr = length(xr - xout);															// dr
-
-	vec4 res1 = zr * ((otr * dr) + 1.0f) * (pow(vec4(e), -otr * vec4(dr)) / (sigmaPrimeExtinction * vec4(pow(dr, 3))));
 
 	///////////////////////////////////////////////////////////
 
@@ -147,11 +143,15 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 	vec4 xv = xin + dot(zv, surfaceNormal);
 	float dv = length(xv - xout);
 
-	vec4 res2 = zv * ((otr * dv) + 1.0f) * (pow(vec4(e), -otr * dv) / (sigmaPrimeExtinction * pow(dv, 3)));
-
 	///////////////////////////////////////////////////////////
 
-	vec4 Rd = res0 * (res1 + res2);
+	vec4 res1 = alphaPrime / fourPi;
+	vec4 res2 = zr * (otr * dr + 1.0f);
+	vec4 res3 = pow(vec4(e), -otr * dr) / (sigmaPrimeExtinction * pow(dr, 3.0f));
+	vec4 res4 = zv * (otr * dv + 1.0f);
+	vec4 res5 = pow(vec4(e), -otr * dv) / (sigmaPrimeExtinction * pow(dv, 3.0f));
+
+	vec4 Rd = res1 * (res2 * res3 + res4 * res5);
 
 	return Rd * vec4(irradiance, 0);
 }
@@ -183,7 +183,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	//translucent = false;
 	if (translucent)
 	{
-		const int sampleSize = 1;
+		const int sampleSize = 3;
 		const int sampleKernel = 1;
 
 		vec2 sampleCoords = GetLightViewCoords(worldPosition);
@@ -196,7 +196,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 				
 				vec3 xout = worldPosition.xyz;
 				vec3 wout = normalize(camera_position - xout);
-				vec3 bxOut = CalculateTransformFunction(worldPosition, sampleOffset).xyz * 100000.0f;
+				vec3 bxOut = CalculateTransformFunction(worldPosition, sampleOffset).xyz;
 				vec3 Lout = CalculateTranslucentOutput(worldNormal, wout, bxOut);
 
 				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(0.0f, 0.0f, 0.0f);
