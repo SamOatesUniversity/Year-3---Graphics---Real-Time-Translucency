@@ -615,6 +615,7 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	m_debugbar.fps = static_cast<int>(1000.0f / m_debugbar.timer.wholeFrame);
 
 	// Render the debug overlay
+	TwRefreshBar(m_debugbar.bar);
 	TwDraw();
 }
 
@@ -999,20 +1000,36 @@ void MyView::CreateTweakBar()
 	m_lightbar.bar = TwNewBar("Lighting Settings");
 	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='260 210' position='20 20'");  
 
-	TwAddVarRW (m_lightbar.bar, "ToggleLight0", TW_TYPE_BOOLCPP, &m_light[0]->Enabled, "group=Lights label='Enable Light One'");
-	TwAddVarRW (m_lightbar.bar, "ToggleLight1", TW_TYPE_BOOLCPP, &m_light[1]->Enabled, "group=Lights label='Enable Light Two'");
-	TwAddVarRW (m_lightbar.bar, "ToggleLight2", TW_TYPE_BOOLCPP, &m_light[2]->Enabled, "group=Lights label='Enable Light Buddha'");
-	TwAddVarRW (m_lightbar.bar, "ToggleLight3", TW_TYPE_BOOLCPP, &m_light[3]->Enabled, "group=Lights label='Enable Light Rabbit'");
-	TwAddVarRW (m_lightbar.bar, "ToggleLight4", TW_TYPE_BOOLCPP, &m_light[4]->Enabled, "group=Lights label='Enable Light Dragon'");
+	std::string groupName[] = {"Light One", "Light Two", "Light Three", "Light Four", "Light Five"};
+	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
+	{
+		std::stringstream nameBuffer, paramBuffer;
+		nameBuffer << "Light-" << lightIndex << "-Enabled";
+		paramBuffer << "group='" << groupName[lightIndex] << "' label='Enable'";
+		TwAddVarRW(m_lightbar.bar, nameBuffer.str().c_str(), TW_TYPE_BOOLCPP, &m_light[lightIndex]->Enabled, paramBuffer.str().c_str());
 
-	TwAddVarRW (m_lightbar.bar, "ToggleShadows", TW_TYPE_BOOLCPP, &m_flags.enableShadows, "group=Shadows label='Enable Shadows'");
-	TwAddVarRW (m_lightbar.bar, "TogglePCF",	 TW_TYPE_BOOLCPP, &m_flags.enableShadowPCF, "group=Shadows label='Enable PCF'");
+		nameBuffer.str(std::string()); paramBuffer.str(std::string());
+		nameBuffer << "Light-" << lightIndex << "-NearClip";
+		paramBuffer << "group='" << groupName[lightIndex] << "' label='Near Clip Plain'";
+		TwAddVarRW(m_lightbar.bar, nameBuffer.str().c_str(), TW_TYPE_FLOAT, &m_light[lightIndex]->NearPlane, paramBuffer.str().c_str());
 
-	TwEnumVal shadowMapEV[] = { {ShadowMapSize128, "128x128"}, {ShadowMapSize256, "256x256"}, {ShadowMapSize512, "512x512"}, {ShadowMapSize1024, "1024x1024"}, {ShadowMapSize2048, "2048x2048"}, {ShadowMapSize4096, "4096x4096"} };
-	TwType ShadowMapSizeEnum = TwDefineEnum("ShadowMapSizeEnum", shadowMapEV, 6);
-	TwAddVarRW(m_lightbar.bar, "ShadowMapSize", ShadowMapSizeEnum, &Light::ShadowMapSize, "group=Shadows label='Texture Size'");
+		nameBuffer.str(std::string()); paramBuffer.str(std::string());
+		nameBuffer << "Light-" << lightIndex << "-Color";
+		paramBuffer << "group='" << groupName[lightIndex] << "' label='Colour'";
+		TwAddVarRW(m_lightbar.bar, nameBuffer.str().c_str(), TW_TYPE_COLOR3F, &m_light[lightIndex]->Color, paramBuffer.str().c_str());
+	}
 
-	TwAddVarRW (m_lightbar.bar, "ToggleRespectShadow", TW_TYPE_BOOLCPP, &m_flags.respectShadowFlag, "group=Shadows label='Respect Shadow Flag'");
+	// shadow settings
+	{
+		TwAddVarRW (m_lightbar.bar, "ToggleShadows", TW_TYPE_BOOLCPP, &m_flags.enableShadows, "group=Shadows label='Enable Shadows'");
+		TwAddVarRW (m_lightbar.bar, "TogglePCF",	 TW_TYPE_BOOLCPP, &m_flags.enableShadowPCF, "group=Shadows label='Enable PCF'");
+
+		TwEnumVal shadowMapEV[] = { {ShadowMapSize128, "128x128"}, {ShadowMapSize256, "256x256"}, {ShadowMapSize512, "512x512"}, {ShadowMapSize1024, "1024x1024"}, {ShadowMapSize2048, "2048x2048"}, {ShadowMapSize4096, "4096x4096"} };
+		TwType ShadowMapSizeEnum = TwDefineEnum("ShadowMapSizeEnum", shadowMapEV, 6);
+		TwAddVarRW(m_lightbar.bar, "ShadowMapSize", ShadowMapSizeEnum, &Light::ShadowMapSize, "group=Shadows label='Texture Size'");
+
+		TwAddVarRW (m_lightbar.bar, "ToggleRespectShadow", TW_TYPE_BOOLCPP, &m_flags.respectShadowFlag, "group=Shadows label='Respect Shadow Flag'");
+	}
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");

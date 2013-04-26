@@ -9,6 +9,7 @@ Light::Light( MyScene::Light &light ) :
 		Intensity(1.0f),
 		NearPlane(1.0f)
 {
+	Color[0] = Color[1] = Color[2] = Color[3] = 1.0f;
 	m_light = light;
 }
 
@@ -93,6 +94,7 @@ void Light::PerformLightPass(
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_coneangle"), (m_light.field_of_view_degrees * 0.5f) * 0.017f);	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_position"), 1, glm::value_ptr(m_light.position));	
 	glUniform3fv(glGetUniformLocation(shader->GetProgram(), "spotlight_direction"), 1, glm::value_ptr(m_light.direction));	
+	glUniform4fv(glGetUniformLocation(shader->GetProgram(), "spotlight_color"), 1, glm::value_ptr(glm::vec4(Color[0], Color[1], Color[2], Color[3])));	
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_intensity"), Intensity);
 }
 
