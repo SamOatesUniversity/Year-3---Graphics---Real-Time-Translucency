@@ -857,9 +857,10 @@ void MyView::DrawSpotLights(
 
 	m_debugbar.timer.lbufferspotp2 = m_debugbar.timer.lbufferspotp1 = 0.0f;
 	
-	int lightIndex = 0;
+	int lightIndex = -1;
 	for (Light *light : m_light)
 	{
+		lightIndex++;
 		if (!light->Enabled)
 		{
 			continue;
@@ -867,7 +868,7 @@ void MyView::DrawSpotLights(
 
 		profy->StartTimer(m_timer[Timer::LBuffer_SpotLightFirstPass]);
 
-		light->Update(scene_->light(lightIndex++));
+		light->Update(scene_->light(lightIndex));
 		light->CalculateWorldMatrix(scene_->upDirection());
 
 		const bool castShadow = m_flags.enableShadows && (!m_flags.respectShadowFlag || scene_->light(lightIndex).casts_shadows);
@@ -899,6 +900,23 @@ void MyView::DrawSpotLights(
 			const MyScene::Model model = scene_->model(modelIndex);
 			const Mesh mesh = m_meshes[model.mesh_index];
 			const MyScene::Material material = scene_->material(model.material_index);
+
+			if (lightIndex >= 2 && m_flags.respectShadowFlag && material.translucency == 0.0f)
+			{
+				continue;
+			}
+
+			// rabbit light cant see buddah
+			if (lightIndex == 3 && modelIndex == 82)
+			{
+				continue;
+			}
+
+			// dragon light cant see buddah nor rabbit
+			if (lightIndex == 4 && (modelIndex == 82 || modelIndex == 81))
+			{
+				continue;
+			}
 
 			light->PerformShadowPass(spotlightShadow, model, mesh, material);
 
@@ -993,14 +1011,14 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='260 150' position='20 250'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 170' position='20 250'");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
 	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
-	TwAddVarRO (m_debugbar.bar, "LBufferDirectionalLight", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferdirectional, "group=Timers label='Lbuffer Directional Light (ms)'");
-	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP1", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp1, "group=Timers label='Lbuffer Spot Light First Pass (ms)'");
-	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP2", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp2, "group=Timers label='Lbuffer Spot Light Second Pass (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferDirectionalLight", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferdirectional, "group=Timers label='Directional Light (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP1", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp1, "group=Timers label='Spot Light First Pass (ms)'");
+	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP2", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp2, "group=Timers label='Spot Light Second Pass (ms)'");
 	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_FLOAT, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
 }
