@@ -14,6 +14,7 @@ uniform vec3 spotlight_position;
 uniform float spotlight_range;
 uniform vec3 spotlight_direction;
 uniform float spotlight_coneangle;
+uniform float spotlight_intensity;
 
 uniform mat4 light_view_xform;
 uniform mat4 light_projection_xform;
@@ -148,7 +149,7 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 
 	///////////////////////////////////////////////////////////
 
-	const float distAtten = 1.8f;
+	const float distAtten = 1.85f;
 
 	vec4 res1 = alphaPrime / fourPi;
 	vec4 res2 = zr * (otr * dr + 1.0f);
@@ -175,18 +176,17 @@ float CalculateTranslucentOutput(vec3 worldNormal, vec3 wout)
 
 vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 direction, float cone, float maxrange, vec3 colour, bool translucent)
 {
-	const float intensity = 1.0f;
 	vec3 L = normalize(position - worldPosition.xyz);
 
     float spotLight = dot(-L, direction);
-	float fatt = smoothstep(0.0f, 1.0f, (spotLight - cos(cone * 0.5f)) * 15.0f) * intensity;
+	float fatt = smoothstep(0.0f, 1.0f, (spotLight - cos(cone * 0.5f)) * 15.0f) * spotlight_intensity;
     vec3 lighting = vec3(0);
 
 	//translucent = false;
 	if (translucent && hasTranslucency)
 	{
-		const int sampleSize = 20;
-		const int sampleKernel = 10;
+		const int sampleSize = 16;
+		const int sampleKernel = 8;
 		int count = 0;
 
 		vec3 xout = worldPosition.xyz;
@@ -205,7 +205,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 				vec3 bxOut = CalculateTransformFunction(worldPosition, sampleOffset).xyz;
 				vec3 Lout = piOverOne * schlick * bxOut;
 
-				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(0.0f, 0.0f, 0.0f);
+				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(0.0f);
 				count++;
 			}
 		}
@@ -259,7 +259,7 @@ vec3 SpotLightPass()
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 1.3f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
+	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 1.25f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
 
 	if (cast_shadows == 1)
 	{
