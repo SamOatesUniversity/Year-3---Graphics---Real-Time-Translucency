@@ -5,6 +5,7 @@ eShadowMapSize Light::OldShadowMapSize = ShadowMapSize;
 
 Light::Light( MyScene::Light &light ) :
 		Enabled(true),
+		HasTranslucency(true),
 		NearPlane(1.0f)
 {
 	m_light = light;
@@ -84,6 +85,7 @@ void Light::PerformLightPass(
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "cast_shadows"), castShadows);	
 	glUniform1i(glGetUniformLocation(shader->GetProgram(), "enableShadowPCF"), enableShadowPCF);	
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "oneOverShadowMapSize"), 1.0f / ShadowMapToInt());
+	glUniform1i(glGetUniformLocation(shader->GetProgram(), "hasTranslucency"), HasTranslucency);
 
 	// set the current point lights data
 	glUniform1f(glGetUniformLocation(shader->GetProgram(), "spotlight_range"), m_light.range);				
