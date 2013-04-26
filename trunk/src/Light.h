@@ -28,6 +28,7 @@ private:
 public:
 
 	bool								Enabled;
+	bool								HasTranslucency;
 	float								NearPlane;
 
 public:

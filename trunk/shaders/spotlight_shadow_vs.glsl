@@ -8,6 +8,7 @@ in vec3 vertex_position;
 in vec3 vertex_normal;
 
 out vec4 lvpVertexPosition;
+out vec4 lVertexPosition;
 out vec4 lvpVertexNormal;
 
 void main(void)
@@ -15,7 +16,8 @@ void main(void)
 	lvpVertexNormal = vec4(normalize(vertex_normal), 0.0f);
 	lvpVertexNormal = worldMatrix * lvpVertexNormal;
 
-    lvpVertexPosition = worldMatrix * vec4(vertex_position, 1.0f);
-	gl_Position = viewMatrix * lvpVertexPosition;
+    lVertexPosition = worldMatrix * vec4(vertex_position, 1.0f);
+	gl_Position = viewMatrix * lVertexPosition;
 	gl_Position = projectionMatrix * gl_Position;
+	lvpVertexPosition = gl_Position;
 }

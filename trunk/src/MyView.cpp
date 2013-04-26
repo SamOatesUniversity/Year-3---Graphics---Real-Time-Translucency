@@ -343,7 +343,9 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		m_light.push_back(new Light(scene_->light(lightIndex)));
 	}
 	m_light[0]->NearPlane = 10.0f;
+	m_light[0]->HasTranslucency = false;
 	m_light[1]->NearPlane = 10.0f;
+	m_light[1]->HasTranslucency = false;
 
 	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	if (gfxCard.find("ATI") != std::string::npos) {
