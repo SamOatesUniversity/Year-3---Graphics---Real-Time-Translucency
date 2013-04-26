@@ -344,8 +344,11 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	}
 	m_light[0]->NearPlane = 10.0f;
 	m_light[0]->HasTranslucency = false;
+	m_light[0]->Intensity = 0.1f;
+
 	m_light[1]->NearPlane = 10.0f;
 	m_light[1]->HasTranslucency = false;
+	m_light[1]->Intensity = 0.1f;
 
 	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	if (gfxCard.find("ATI") != std::string::npos) {
@@ -1013,7 +1016,7 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 170' position='20 250'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 250'");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");

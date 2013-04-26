@@ -29,6 +29,7 @@ public:
 
 	bool								Enabled;
 	bool								HasTranslucency;
+	float								Intensity;
 	float								NearPlane;
 
 public:
