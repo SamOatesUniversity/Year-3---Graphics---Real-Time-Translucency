@@ -101,11 +101,12 @@ windowControlKeyboardChanged(std::shared_ptr<tyga::Window> window,
         break;
 	case 262:
 		if (down) {
-			system("cls");
-			std::cout << "----------------------------------" << "\n";
-			std::cout << "||	Reloading Shaders	||" << "\n";
-			std::cout << "----------------------------------" << "\n\n";
 			view_->reloadShaders();
+		}
+		break;
+	case 'E':
+		if (down) {
+			scene_->toggleCameraAnimation();
 		}
 		break;
     }
