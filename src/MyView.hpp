@@ -67,6 +67,11 @@ public:
 												//! Reload the programs shaders
 	void										reloadShaders();
 
+												//! 
+	void										ShowProfilingPieChart(
+													bool open										//!< 
+												) const;
+
 private:
 
     void
@@ -131,7 +136,10 @@ private:
 	void										BindGBufferTextures(
 													const Shader *const shader						//!< A pointer to the shader of the samplers to bind
 												);
-	void CreateTweakBar();
+	
+												//! 
+	void										CreateTweakBar();
+
 private:
 
 	RenderFlags									m_flags;
