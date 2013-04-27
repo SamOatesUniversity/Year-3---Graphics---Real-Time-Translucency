@@ -576,13 +576,8 @@ windowViewDidReset(std::shared_ptr<tyga::Window> window,
 void MyView::
 windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
-	std::vector<ProFy::TimerID> timerIDs;
-	timerIDs.push_back(m_timer[Timer::GBufferCreation]);
-	timerIDs.push_back(m_timer[Timer::LBuffer_DirectionalLight]);
-	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass]);
-	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass]);
-	timerIDs.push_back(m_timer[Timer::PostProcessing]);
-	ProFy::GetInstance().OutputTimers("AverageFrameTimes", timerIDs, GraphType::Pie, false); 
+	ShowProfilingPieChart(false);
+	
 	
 	TwTerminate();
 
@@ -1026,6 +1021,12 @@ void MyView::DrawSpotLights(
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void TW_CALL CallBackShowProfilingPieChart(void *data)
+{
+	MyView *const view = static_cast<MyView*>(data);
+	view->ShowProfilingPieChart(true);
+}
+
 void MyView::CreateTweakBar()
 {
 	// Create a bar to put all lighting settins on
@@ -1075,13 +1076,27 @@ void MyView::CreateTweakBar()
 	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP2", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp2, "group=Timers label='Spot Light Second Pass (ms)'");
 	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_FLOAT, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
-
 	//////////////////////////////////
 
-	m_renderbar.bar = TwNewBar("Translucency Settings");
-	TwDefine("'Translucency Settings' color='0 128 255' valueswidth=fit size='280 160' position='20 380'");  
+	m_renderbar.bar = TwNewBar("Misc Settings");
+	TwDefine("'Misc Settings' color='0 128 255' valueswidth=fit size='280 160' position='20 380'");  
 
 	TwEnumVal translucencyModeEV[] = { {ShadowMapSize128, "Translucent Shadow Map"}, {ShadowMapSize256, "The SO Approximation"} };
 	TwType translucencyModeEnum = TwDefineEnum("translucencyEnum", translucencyModeEV, 2);
 	TwAddVarRW(m_renderbar.bar, "TranslucencyMode", translucencyModeEnum, &m_renderbar.translucencyMode, "label='Translucency Mode'");
+
+	TwAddButton(m_renderbar.bar, "Show Profling Pie Chart", CallBackShowProfilingPieChart, this, "");
+}
+
+void MyView::ShowProfilingPieChart(
+		bool open
+	) const
+{
+	std::vector<ProFy::TimerID> timerIDs;
+	timerIDs.push_back(m_timer[Timer::GBufferCreation]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_DirectionalLight]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+	timerIDs.push_back(m_timer[Timer::PostProcessing]);
+	ProFy::GetInstance().OutputTimers("AverageFrameTimes", timerIDs, GraphType::Pie, open); 
 }
