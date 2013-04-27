@@ -391,9 +391,17 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::ShaderLoadtime], ProFy::TimerType::CPU, "Shader Load Time");
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::GBufferCreation], ProFy::TimerType::OpenGL, "GBuffer Render");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_DirectionalLight], ProFy::TimerType::OpenGL, "LBuffer Directional Light");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass], ProFy::TimerType::OpenGL, "LBuffer Spot Light First Pass");
-	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass], ProFy::TimerType::OpenGL, "LBuffer Spot Light Second Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_DirectionalLight], ProFy::TimerType::OpenGL, "Directional Light");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass0], ProFy::TimerType::OpenGL, "Spot Light(0) First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass0], ProFy::TimerType::OpenGL, "Spot Light(0) Second Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass1], ProFy::TimerType::OpenGL, "Spot Light(1) First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass1], ProFy::TimerType::OpenGL, "Spot Light(1) Second Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass2], ProFy::TimerType::OpenGL, "Spot Light(2) First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass2], ProFy::TimerType::OpenGL, "Spot Light(2) Second Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass3], ProFy::TimerType::OpenGL, "Spot Light(3) First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass3], ProFy::TimerType::OpenGL, "Spot Light(3) Second Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightFirstPass4], ProFy::TimerType::OpenGL, "Spot Light(4) First Pass");
+	ProFy::GetInstance().CreateTimer(m_timer[Timer::LBuffer_SpotLightSecondPass4], ProFy::TimerType::OpenGL, "Spot Light(4) Second Pass");
 	ProFy::GetInstance().CreateTimer(m_timer[Timer::PostProcessing], ProFy::TimerType::OpenGL, "Post Processing");
 
     assert(scene_ != nullptr);
@@ -890,6 +898,21 @@ void MyView::DrawSpotLights(
 
 	m_debugbar.timer.lbufferspotp2 = m_debugbar.timer.lbufferspotp1 = 0.0f;
 	
+	static const ProFy::TimerID firstPass[] = {
+		Timer::LBuffer_SpotLightFirstPass0, 
+		Timer::LBuffer_SpotLightFirstPass1, 
+		Timer::LBuffer_SpotLightFirstPass2, 
+		Timer::LBuffer_SpotLightFirstPass3, 
+		Timer::LBuffer_SpotLightFirstPass4
+	};
+	static const ProFy::TimerID secondPass[] = {
+		Timer::LBuffer_SpotLightSecondPass0, 
+		Timer::LBuffer_SpotLightSecondPass1, 
+		Timer::LBuffer_SpotLightSecondPass2, 
+		Timer::LBuffer_SpotLightSecondPass3, 
+		Timer::LBuffer_SpotLightSecondPass4
+	};
+
 	int lightIndex = -1;
 	for (Light *light : m_light)
 	{
@@ -899,7 +922,7 @@ void MyView::DrawSpotLights(
 			continue;
 		}
 
-		profy->StartTimer(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+		profy->StartTimer(m_timer[firstPass[lightIndex]]);
 
 		light->Update(scene_->light(lightIndex));
 		light->CalculateWorldMatrix(scene_->upDirection());
@@ -939,14 +962,20 @@ void MyView::DrawSpotLights(
 				continue;
 			}
 
-			// rabbit light cant see buddah
-			if (lightIndex == 3 && modelIndex == 82)
+			// buddah
+			if (lightIndex == 2 && (modelIndex == 81 || modelIndex == 83))
 			{
 				continue;
 			}
 
-			// dragon light cant see buddah nor rabbit
-			if (lightIndex == 4 && (modelIndex == 82 || modelIndex == 81))
+			// rabbit
+			if (lightIndex == 3 && (modelIndex == 82 || modelIndex == 83))
+			{
+				continue;
+			}
+
+			// dragon light
+			if (lightIndex == 4 && (modelIndex == 81 || modelIndex == 82))
 			{
 				continue;
 			}
@@ -961,12 +990,12 @@ void MyView::DrawSpotLights(
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 
-		profy->EndTimer(m_timer[Timer::LBuffer_SpotLightFirstPass]);
-		m_debugbar.timer.lbufferspotp1 += profy->GetTimerResult(m_timer[Timer::LBuffer_SpotLightFirstPass]);
+		profy->EndTimer(m_timer[firstPass[lightIndex]]);
+		m_debugbar.timer.lbufferspotp1 += profy->GetTimerResult(m_timer[firstPass[lightIndex]]);
 
 		///////////////////////////////////////////////////////
 
-		profy->StartTimer(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+		profy->StartTimer(m_timer[secondPass[lightIndex]]);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_lbuffer.frameBuffer);
 		glViewport(0, 0, (GLint)m_lbuffer.size.x, (GLint)m_lbuffer.size.y);
@@ -1010,8 +1039,8 @@ void MyView::DrawSpotLights(
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
 
-		profy->EndTimer(m_timer[Timer::LBuffer_SpotLightSecondPass]);
-		m_debugbar.timer.lbufferspotp2 += profy->GetTimerResult(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+		profy->EndTimer(m_timer[secondPass[lightIndex]]);
+		m_debugbar.timer.lbufferspotp2 += profy->GetTimerResult(m_timer[secondPass[lightIndex]]);
 	}		
 	
 
@@ -1068,7 +1097,7 @@ void MyView::CreateTweakBar()
 	m_debugbar.bar = TwNewBar("Debug Information");
 	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 180'");  
 	
-	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
+	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT16, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
 	TwAddVarRO (m_debugbar.bar, "GBufferCreation", TW_TYPE_FLOAT, &m_debugbar.timer.gbufferCreation, "group=Timers label='Gbuffer Render (ms)'");
 	TwAddVarRO (m_debugbar.bar, "LBufferDirectionalLight", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferdirectional, "group=Timers label='Directional Light (ms)'");
@@ -1095,8 +1124,16 @@ void MyView::ShowProfilingPieChart(
 	std::vector<ProFy::TimerID> timerIDs;
 	timerIDs.push_back(m_timer[Timer::GBufferCreation]);
 	timerIDs.push_back(m_timer[Timer::LBuffer_DirectionalLight]);
-	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass]);
-	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass0]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass0]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass1]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass1]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass2]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass2]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass3]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass3]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightFirstPass4]);
+	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass4]);
 	timerIDs.push_back(m_timer[Timer::PostProcessing]);
 	ProFy::GetInstance().OutputTimers("AverageFrameTimes", timerIDs, GraphType::Pie, open); 
 }
