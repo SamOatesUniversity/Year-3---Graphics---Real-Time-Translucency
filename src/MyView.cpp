@@ -20,6 +20,8 @@ MyView()
 
 	m_debugbar.fps = 60;
 	m_debugbar.timer.gbufferCreation = 0.0f;
+
+	m_renderbar.translucencyMode = TSM;
 }
 
 MyView::
@@ -53,6 +55,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the ambiant shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -76,6 +79,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the pointlight shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -99,6 +103,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the spotlight shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -115,6 +120,30 @@ void MyView::reloadShaders()
 		m_shader["spotlight"] = spotlight;
 	}
 
+	// Create a spotlight shader
+	Shader *const spotlight_SO = new Shader();
+	if (!spotlight_SO->Load("shaders/spotlight_SO_vs.glsl", "shaders/spotlight_SO_fs.glsl")) 
+	{
+		std::cout << "Failed to load the spotlight (SO) shader!" << std::endl;
+		system("PAUSE");
+		reloadShaders();
+		return;
+	}
+	else
+	{
+		glAttachShader(spotlight_SO->GetProgram(), spotlight_SO->GetVertexShader());
+		glBindAttribLocation(spotlight_SO->GetProgram(), 0, "vertex_position");
+
+		glAttachShader(spotlight_SO->GetProgram(), spotlight_SO->GetFragmentShader());
+		glBindFragDataLocation(spotlight_SO->GetProgram(), 0, "fragment_colour");
+
+		glLinkProgram(spotlight_SO->GetProgram());
+
+		std::cout << "Loaded spotlight (SO) shader..." << std::endl;
+
+		m_shader["spotlight_so"] = spotlight_SO;
+	}
+
 	// Create a spotlight shadow shader
 	Shader *const spotlightShadow = new Shader();
 	if (!spotlightShadow->Load("shaders/spotlight_shadow_vs.glsl", "shaders/spotlight_shadow_fs.glsl")) 
@@ -122,6 +151,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the spotlight shadow shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -146,6 +176,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the gbuffer shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -172,6 +203,7 @@ void MyView::reloadShaders()
 		std::cout << "Failed to load the post processing shader!" << std::endl;
 		system("PAUSE");
 		reloadShaders();
+		return;
 	}
 	else
 	{
@@ -856,7 +888,7 @@ void MyView::DrawSpotLights(
 		scene_->upDirection()
 		);
 
-	const Shader *const spotlight = m_shader["spotlight"];
+	const Shader *const spotlight = m_renderbar.translucencyMode == TSM ? m_shader["spotlight"] : m_shader["spotlight_so"];
 	const Shader *const spotlightShadow = m_shader["spotlight_shadow"];
 
 	ProFy *profy = &ProFy::GetInstance();
@@ -1048,4 +1080,8 @@ void MyView::CreateTweakBar()
 
 	m_renderbar.bar = TwNewBar("Translucency Settings");
 	TwDefine("'Translucency Settings' color='0 128 255' valueswidth=fit size='280 160' position='20 380'");  
+
+	TwEnumVal translucencyModeEV[] = { {ShadowMapSize128, "Translucent Shadow Map"}, {ShadowMapSize256, "The SO Approximation"} };
+	TwType translucencyModeEnum = TwDefineEnum("translucencyEnum", translucencyModeEV, 2);
+	TwAddVarRW(m_renderbar.bar, "TranslucencyMode", translucencyModeEnum, &m_renderbar.translucencyMode, "label='Translucency Mode'");
 }

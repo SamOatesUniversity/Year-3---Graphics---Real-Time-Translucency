@@ -205,8 +205,15 @@ private:
 		} timer;
 	}											m_debugbar;
 
+	enum eTranslucencyMode
+	{
+		TSM,
+		SOApprocimation
+	};
+
 	struct {
 		TwBar *bar;
+		eTranslucencyMode translucencyMode;
 	}											m_renderbar;
 
 };

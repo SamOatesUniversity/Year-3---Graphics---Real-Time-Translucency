@@ -145,5 +145,11 @@
     <None Include="shaders\antialiasing\fxaa.fs">
       <Filter>Shader Files\antialiasing</Filter>
     </None>
+    <None Include="shaders\spotlight_SO_fs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\spotlight_SO_vs.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
