@@ -47,7 +47,9 @@ public:
 	void									Release();
 
 											//! Draw the mesh
-	void									Draw() const;
+	void									Draw(
+												const bool bindVao = true
+											) const;
 
 											//! Get the number of vertices in the mesh
 	const int								&GetNoofVertices() const
