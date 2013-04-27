@@ -205,4 +205,8 @@ private:
 		} timer;
 	}											m_debugbar;
 
+	struct {
+		TwBar *bar;
+	}											m_renderbar;
+
 };

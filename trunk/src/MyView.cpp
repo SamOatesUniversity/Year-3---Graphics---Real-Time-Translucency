@@ -998,7 +998,7 @@ void MyView::CreateTweakBar()
 {
 	// Create a bar to put all lighting settins on
 	m_lightbar.bar = TwNewBar("Lighting Settings");
-	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='260 210' position='20 20'");  
+	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='280 140' position='20 20'");  
 
 	std::string groupName[] = {"Light One", "Light Two", "Light Three", "Light Four", "Light Five"};
 	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
@@ -1033,7 +1033,7 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 250'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 180'");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT8, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
@@ -1043,4 +1043,9 @@ void MyView::CreateTweakBar()
 	TwAddVarRO (m_debugbar.bar, "LBufferSpotLightP2", TW_TYPE_FLOAT, &m_debugbar.timer.lbufferspotp2, "group=Timers label='Spot Light Second Pass (ms)'");
 	TwAddVarRO (m_debugbar.bar, "PostProcessing", TW_TYPE_FLOAT, &m_debugbar.timer.postProcessing, "group=Timers label='PostProcessing (ms)'");
 
+
+	//////////////////////////////////
+
+	m_renderbar.bar = TwNewBar("Translucency Settings");
+	TwDefine("'Translucency Settings' color='0 128 255' valueswidth=fit size='280 160' position='20 380'");  
 }
