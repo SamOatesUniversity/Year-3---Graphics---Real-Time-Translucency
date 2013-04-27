@@ -186,32 +186,17 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	//translucent = false;
 	if (translucent && hasTranslucency)
 	{
-		const int sampleSize = 16;
-		const int sampleKernel = 8;
-		int count = 0;
-
-		vec3 xout = worldPosition.xyz;
-		vec3 wout = normalize(camera_position - xout);
-		const float piOverOne = 0.31830988618379067153776752674503f;
-		float schlick = CalculateTranslucentOutput(worldNormal, wout);
+		const float intensity = 0.5f;
 
 		vec2 sampleCoords = GetLightViewCoords(worldPosition);
+		vec3 xout = worldPosition.xyz;
+		vec3 xin = GetXin(sampleCoords).xyz;
 
-		for (int xOffset = -sampleSize; xOffset <= sampleSize; xOffset += sampleKernel)
-		{		
-			for (int yOffset = -sampleSize; yOffset <= sampleSize; yOffset += sampleKernel)
-			{
-				vec2 sampleOffset = sampleCoords + vec2(xOffset * oneOverShadowMapSize, yOffset * oneOverShadowMapSize);
-								
-				vec3 bxOut = CalculateTransformFunction(worldPosition, sampleOffset).xyz;
-				vec3 Lout = piOverOne * schlick * bxOut;
+		float dist = pow(distance(xin, xout), 3) * 0.005f;
 
-				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(1.0f);
-				count++;
-			}
-		}
+		float ang = (clamp(dot(-L, worldNormal), 0, 1) / dist);
 
-		lighting /= count;
+		lighting = (spotLight > cos(cone)) ? colour * clamp(ang, 0, 3) * (dot(L, -worldNormal) * 0.005f) * fatt * intensity : vec3(0.0f);
 	}
 	else
 	{
@@ -260,7 +245,7 @@ vec3 SpotLightPass()
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 1.25f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
+	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 1.75f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
 
 	if (cast_shadows == 1)
 	{
