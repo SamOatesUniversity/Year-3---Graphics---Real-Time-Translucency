@@ -141,6 +141,8 @@
     <None Include="shaders\spotlight_fs.glsl" />
     <None Include="shaders\spotlight_shadow_fs.glsl" />
     <None Include="shaders\spotlight_shadow_vs.glsl" />
+    <None Include="shaders\spotlight_SO_fs.glsl" />
+    <None Include="shaders\spotlight_SO_vs.glsl" />
     <None Include="shaders\spotlight_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
