@@ -54,8 +54,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>.\framework;.\include;$(IncludePath)</IncludePath>
-    <LibraryPath>.\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>.\framework;.\include;..\ProFy\ProFy\src;C:\Code\University\Year Three\ProFy\ProFy\src;C:\Program Files %28x86%29\Visual Leak Detector\include;C:\Users\j9060283\Desktop\profy-lib\ProFy\src;.\lib\AntTweakBar\include;$(IncludePath)</IncludePath>
+    <LibraryPath>.\lib;..\ProFy\Release;C:\Code\University\Year Three\ProFy\Release;C:\Program Files %28x86%29\Visual Leak Detector\lib\Win32;C:\Users\j9060283\Desktop\profy-lib\Release;.\lib\AntTweakBar\lib\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,7 +92,10 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-s.lib;png-vc110-mt-s.lib;zlib-vc110-mt-s.lib;tcf-vc110-mt-s.lib;tsl-vc110-mt-s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw-vc110-mt-s.lib;png-vc110-mt-s.lib;zlib-vc110-mt-s.lib;tcf-vc110-mt-s.lib;tsl-vc110-mt-s.lib;ProFy Static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "$(SolutionDir)$(TargetFileName)"</Command>
