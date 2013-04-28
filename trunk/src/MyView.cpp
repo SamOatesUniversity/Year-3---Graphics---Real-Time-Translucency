@@ -309,7 +309,7 @@ void MyView::CreateShadowBuffer(
 
 	// render texture
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, windowWidth, windowHeight, 0, GL_RED, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -317,7 +317,7 @@ void MyView::CreateShadowBuffer(
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::depth], 0);
 
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::irradiance]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -325,7 +325,7 @@ void MyView::CreateShadowBuffer(
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::irradiance], 0);
 
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::surfacenormal]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -333,7 +333,7 @@ void MyView::CreateShadowBuffer(
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::surfacenormal], 0);
 
 	glBindTexture(GL_TEXTURE_2D, m_shadowbuffer.texture[TranslucencyTexture::xin]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -538,21 +538,21 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		delete[] elements;
 	}
 
-	 tyga::Image texture_image = tyga::imageFromPNG("assets/textures/brick-dark_COLOR.png");
-	 glGenTextures(1, &m_brickTexture.diffuse);
-	 glBindTexture(GL_TEXTURE_2D, m_brickTexture.diffuse);
-	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	 //tyga::Image texture_image = tyga::imageFromPNG("assets/textures/brick-dark_COLOR.png");
+	 //glGenTextures(1, &m_brickTexture.diffuse);
+	 //glBindTexture(GL_TEXTURE_2D, m_brickTexture.diffuse);
+	 //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
+	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	 texture_image = tyga::imageFromPNG("assets/textures/brick-dark_NRM.png");
-	 glGenTextures(1, &m_brickTexture.normal);
-	 glBindTexture(GL_TEXTURE_2D, m_brickTexture.normal);
-	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	 //texture_image = tyga::imageFromPNG("assets/textures/brick-dark_NRM.png");
+	 //glGenTextures(1, &m_brickTexture.normal);
+	 //glBindTexture(GL_TEXTURE_2D, m_brickTexture.normal);
+	 //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
+	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	 glBindTexture(GL_TEXTURE_2D, 0);
+	 //glBindTexture(GL_TEXTURE_2D, 0);
 
 	 glGenFramebuffers(1, &m_gbuffer.frameBuffer);
 	 glGenTextures(GBufferTexture::noof, m_gbuffer.texture);
@@ -586,7 +586,6 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
 {
 	ShowProfilingPieChart(false);
 	
-	
 	TwTerminate();
 
 	for (Light *light : m_light)
@@ -604,10 +603,18 @@ windowViewDidStop(std::shared_ptr<tyga::Window> window)
         delete (*shaderIt).second;
     m_shader.clear();
 
+	for (int i = 0; i < 15; ++i)
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+	}
+
 	glDeleteTextures(GBufferTexture::noof, m_gbuffer.texture);
 	glDeleteTextures(1, &m_gbuffer.depth);
-
 	glDeleteTextures(1, &m_lbuffer.texture);
+	glDeleteTextures(TranslucencyTexture::noof, m_shadowbuffer.texture);
+	glDeleteTextures(1, &m_shadowbuffer.depth);
 
 	glDeleteFramebuffers(1, &m_gbuffer.frameBuffer);
 	glDeleteFramebuffers(1, &m_lbuffer.frameBuffer);
