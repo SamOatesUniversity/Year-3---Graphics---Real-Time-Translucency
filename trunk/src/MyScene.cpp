@@ -16,7 +16,7 @@ MyScene()
 
     animate_camera_ = false;
     camera_.reset(new FirstPersonMovement());
-    camera_->init(glm::vec3(80, 50, 0), 1.5f, 0.5f);
+    camera_->init(glm::vec3(90, 34, -3), 1.66f, -0.35f);
 }
 
 MyScene::
