@@ -1077,19 +1077,19 @@ void MyView::CreateTweakBar()
 	TwDefine("'Translucent Shadow Maps by Sam Oates' valueswidth=1 size='680 300' position='320 140'"); 
 	TwAddButton(m_readmebar.bar, "line0", NULL, NULL, "label='Sam Oates. University of Teesside. Student ID J9060283.'");
 	TwAddButton(m_readmebar.bar, "line1", NULL, NULL, "label=' '");
-	TwAddButton(m_readmebar.bar, "line2", NULL, NULL, "label='This application is a deferred renderer implementing translucent shadow maps in OpenGL 3.2'");
+	TwAddButton(m_readmebar.bar, "line2", NULL, NULL, "label='This application is a deferred renderer implementing translucent shadow maps in OpenGL 3'");
 	TwAddButton(m_readmebar.bar, "line3", NULL, NULL, "label='There are five spot lights within the scene. One behind each model and two skylights.'");
 	TwAddButton(m_readmebar.bar, "line4", NULL, NULL, "label=' '");
 	TwAddButton(m_readmebar.bar, "line5", NULL, NULL, "label='Each light within the scene can have its color and near clip plain changed.'");
 	TwAddButton(m_readmebar.bar, "line6", NULL, NULL, "label='Each light can also be disabled. This is done via the light settings bar to the top left.'");
-	TwAddButton(m_readmebar.bar, "line7", NULL, NULL, "label='Using the lighting settings bar settings for the shadows can also be modified.'");
+	TwAddButton(m_readmebar.bar, "line7", NULL, NULL, "label='Using the lighting settings bar the shadows can also be modified.'");
 	TwAddButton(m_readmebar.bar, "line8", NULL, NULL, "label='Within the scene data there is a flag for which lights project shadows. Enabling the'");
 	TwAddButton(m_readmebar.bar, "line9", NULL, NULL, "label='\"Respect Shadow Flag\" option will enforce this behavior.'");
 	TwAddButton(m_readmebar.bar, "line10", NULL, NULL, "label=' '");
 	TwAddButton(m_readmebar.bar, "line11", NULL, NULL, "label='It is also worth noting that the camera will fly around the scene by default.'");
 	TwAddButton(m_readmebar.bar, "line12", NULL, NULL, "label='This behavior can be toggled by pressing the \"E\" key on your keyboard.'");
 	TwAddButton(m_readmebar.bar, "line13", NULL, NULL, "label=' '");
-	TwAddButton(m_readmebar.bar, "line14", NULL, NULL, "label='Should the animated camera be disabled, you can explorer the scene using the mouse and WASD keys.'");
+	TwAddButton(m_readmebar.bar, "line14", NULL, NULL, "label='Should the animated camera be disabled, you can explore the scene using the mouse and WASD keys.'");
 	TwAddButton(m_readmebar.bar, "line15", NULL, NULL, "label=' '");
 	TwAddButton(m_readmebar.bar, "line16", OnCloseInfo, this, "label='Click here to close this window'");
 }
