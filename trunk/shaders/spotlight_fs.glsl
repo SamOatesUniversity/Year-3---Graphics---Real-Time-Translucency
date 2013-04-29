@@ -186,7 +186,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	if (translucent && hasTranslucency)
 	{
 		const int sampleSize = 16;
-		const int sampleKernel = 8;
+		int sampleKernel = 8;
 		int count = 0;
 
 		vec3 xout = worldPosition.xyz;
@@ -203,7 +203,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 				vec2 sampleOffset = sampleCoords + vec2(xOffset * oneOverShadowMapSize, yOffset * oneOverShadowMapSize);
 								
 				vec3 bxOut = CalculateTransformFunction(worldPosition, sampleOffset).xyz;
-				vec3 Lout = piOverOne * schlick * bxOut;
+				vec3 Lout = clamp(piOverOne * schlick * bxOut, 0, 1);
 
 				lighting += (spotLight > cos(cone)) ? colour * Lout * fatt : vec3(0.0f);
 				count++;
