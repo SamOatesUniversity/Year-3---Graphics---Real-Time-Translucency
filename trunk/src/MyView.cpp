@@ -16,12 +16,15 @@ MyView()
 
 	m_flags.enableShadows = true;
 	m_flags.enableShadowPCF = true;
-	m_flags.respectShadowFlag = true;
+	m_flags.respectShadowFlag = false;
 
 	m_debugbar.fps = 60;
 	m_debugbar.timer.gbufferCreation = 0.0f;
 
 	m_renderbar.translucencyMode = TSM;
+	
+	m_lightbar.bar = nullptr;
+	m_readmebar.bar = nullptr;
 }
 
 MyView::
@@ -71,30 +74,6 @@ void MyView::reloadShaders()
 
 		m_shader["ambiant"] = ambiant;
 	}	
-
-	// Create a pointlight shader
-	Shader *const pointlight = new Shader();
-	if (!pointlight->Load("shaders/pointlight_vs.glsl", "shaders/pointlight_fs.glsl")) 
-	{
-		std::cout << "Failed to load the pointlight shader!" << std::endl;
-		system("PAUSE");
-		reloadShaders();
-		return;
-	}
-	else
-	{
-		glAttachShader(pointlight->GetProgram(), pointlight->GetVertexShader());
-		glBindAttribLocation(pointlight->GetProgram(), 0, "vertex_position");
-
-		glAttachShader(pointlight->GetProgram(), pointlight->GetFragmentShader());
-		glBindFragDataLocation(pointlight->GetProgram(), 0, "fragment_colour");
-
-		glLinkProgram(pointlight->GetProgram());
-
-		std::cout << "Loaded pointlight shader..." << std::endl;
-
-		m_shader["pointlight"] = pointlight;
-	}
 
 	// Create a spotlight shader
 	Shader *const spotlight = new Shader();
@@ -382,6 +361,10 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 	m_light[1]->HasTranslucency = false;
 	m_light[1]->Intensity = 0.1f;
 
+	m_light[2]->SetColor(1.0f, 0.5f, 0.5f);
+	m_light[3]->SetColor(0.2f, 0.75f, 0.2f);
+	m_light[4]->SetColor(0.5f, 0.2f, 0.75f);
+
 	std::string gfxCard = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 	if (gfxCard.find("ATI") != std::string::npos) {
 		m_gfxCard = GFXCardType::ATI;
@@ -430,48 +413,6 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		glBindVertexArray(0);
 
 		m_meshQuad.Create(vertices.size(), 2);
-	}
-
-	// create a sphere mesh to represent the light
-	{
-		tsl::IndexedMesh mesh;
-		tsl::CreateSphere(1.f, 12, &mesh);
-		tsl::ConvertPolygonsToTriangles(&mesh);
-
-		glGenBuffers(1, &m_sphereMesh.getVertexVBO());
-		glBindBuffer(GL_ARRAY_BUFFER, m_sphereMesh.getVertexVBO());
-		glBufferData(
-			GL_ARRAY_BUFFER,
-			mesh.vertex_array.size() * sizeof(glm::vec3),
-			mesh.vertex_array.data(),
-			GL_STATIC_DRAW
-		);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		glGenBuffers(1, &m_sphereMesh.getElementVBO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphereMesh.getElementVBO());
-		glBufferData(
-			GL_ELEMENT_ARRAY_BUFFER,
-			mesh.index_array.size() * sizeof(unsigned int),
-			mesh.index_array.data(),
-			GL_STATIC_DRAW
-		);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		glGenVertexArrays(1, &m_sphereMesh.getVAO());
-		glBindVertexArray(m_sphereMesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_sphereMesh.getElementVBO());
-		glBindBuffer(GL_ARRAY_BUFFER, m_sphereMesh.getVertexVBO());
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(
-			0, 3, 
-			GL_FLOAT, GL_FALSE,
-			sizeof(glm::vec3), 0
-		);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-
-		m_sphereMesh.Create(mesh.vertex_array.size(), mesh.index_array.size());
 	}
 
 	// create a cone to represent spotlights
@@ -538,22 +479,6 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 		delete[] elements;
 	}
 
-	 //tyga::Image texture_image = tyga::imageFromPNG("assets/textures/brick-dark_COLOR.png");
-	 //glGenTextures(1, &m_brickTexture.diffuse);
-	 //glBindTexture(GL_TEXTURE_2D, m_brickTexture.diffuse);
-	 //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
-	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	 //texture_image = tyga::imageFromPNG("assets/textures/brick-dark_NRM.png");
-	 //glGenTextures(1, &m_brickTexture.normal);
-	 //glBindTexture(GL_TEXTURE_2D, m_brickTexture.normal);
-	 //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture_image.width(), texture_image.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.pixels());
-	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	 //glBindTexture(GL_TEXTURE_2D, 0);
-
 	 glGenFramebuffers(1, &m_gbuffer.frameBuffer);
 	 glGenTextures(GBufferTexture::noof, m_gbuffer.texture);
 	 glGenTextures(1, &m_gbuffer.depth);
@@ -567,6 +492,9 @@ windowViewWillStart(std::shared_ptr<tyga::Window> window)
 
 	 TwInit(TW_OPENGL_CORE, NULL);
 	 CreateTweakBar();
+
+	 // *claps ironically*
+	 const_cast<MyScene*>(scene_.get())->toggleCameraAnimation();
 }
 
 void MyView::
@@ -657,7 +585,6 @@ windowViewRender(std::shared_ptr<tyga::Window> window)
 	m_debugbar.fps = static_cast<int>(1000.0f / m_debugbar.timer.wholeFrame);
 
 	// Render the debug overlay
-	TwRefreshBar(m_debugbar.bar);
 	TwDraw();
 }
 
@@ -795,8 +722,6 @@ void MyView::RenderLBuffer(
 
 	// Draw the point lights in the scene
 	DrawSpotLights(camera, aspect_ratio);
-
-	
 }
 
 /*
@@ -1076,11 +1001,19 @@ void TW_CALL CallBackShowProfilingPieChart(void *data)
 	view->ShowProfilingPieChart(true);
 }
 
+void TW_CALL OnCloseInfo(void *data)
+{
+	MyView *const view = static_cast<MyView*>(data);
+	view->CloseInformation();
+}
+
 void MyView::CreateTweakBar()
 {
+	int opened = 0;
+
 	// Create a bar to put all lighting settins on
 	m_lightbar.bar = TwNewBar("Lighting Settings");
-	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=fit size='280 140' position='20 20'");  
+	TwDefine("'Lighting Settings' color='128 0 255' valueswidth=100 size='280 240' position='20 20'");  
 
 	std::string groupName[] = {"Light One", "Light Two", "Light Three", "Light Four", "Light Five"};
 	for (unsigned int lightIndex = 0; lightIndex < m_light.size(); ++lightIndex)
@@ -1099,8 +1032,10 @@ void MyView::CreateTweakBar()
 		nameBuffer << "Light-" << lightIndex << "-Color";
 		paramBuffer << "group='" << groupName[lightIndex] << "' label='Colour'";
 		TwAddVarRW(m_lightbar.bar, nameBuffer.str().c_str(), TW_TYPE_COLOR3F, &m_light[lightIndex]->Color, paramBuffer.str().c_str());
-	}
 
+		TwSetParam(m_lightbar.bar, groupName[lightIndex].c_str(), "opened", TW_PARAM_INT32, 1, &opened);
+	}
+	
 	// shadow settings
 	{
 		TwAddVarRW (m_lightbar.bar, "ToggleShadows", TW_TYPE_BOOLCPP, &m_flags.enableShadows, "group=Shadows label='Enable Shadows'");
@@ -1115,7 +1050,7 @@ void MyView::CreateTweakBar()
 
 	// Create a bar to out put debug information...
 	m_debugbar.bar = TwNewBar("Debug Information");
-	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 180'");  
+	TwDefine("'Debug Information' color='255 85 0' valueswidth=60 size='280 180' position='20 280' refresh=1");  
 	
 	TwAddVarRO (m_debugbar.bar, "FramesPerSecond", TW_TYPE_INT16, &m_debugbar.fps, "group=Generic label='Frames Per Second'");
 	TwAddVarRO (m_debugbar.bar, "TimerWholeFrame", TW_TYPE_FLOAT, &m_debugbar.timer.wholeFrame, "group=Timers label='Whole Frame (ms)'");
@@ -1128,13 +1063,35 @@ void MyView::CreateTweakBar()
 	//////////////////////////////////
 
 	m_renderbar.bar = TwNewBar("Misc Settings");
-	TwDefine("'Misc Settings' color='0 128 255' valueswidth=fit size='280 160' position='20 380'");  
+	TwDefine("'Misc Settings' color='0 128 255' valueswidth=fit size='280 60' position='20 480'");  
 
 	TwEnumVal translucencyModeEV[] = { {ShadowMapSize128, "Translucent Shadow Map"}, {ShadowMapSize256, "The SO Approximation"} };
 	TwType translucencyModeEnum = TwDefineEnum("translucencyEnum", translucencyModeEV, 2);
 	TwAddVarRW(m_renderbar.bar, "TranslucencyMode", translucencyModeEnum, &m_renderbar.translucencyMode, "label='Translucency Mode'");
 
-	TwAddButton(m_renderbar.bar, "Show Profling Pie Chart", CallBackShowProfilingPieChart, this, "");
+	TwAddButton(m_renderbar.bar, "Show Profiling Pie Chart", CallBackShowProfilingPieChart, this, "");
+
+	///////////////////////////////////
+
+	m_readmebar.bar = TwNewBar("Translucent Shadow Maps by Sam Oates");
+	TwDefine("'Translucent Shadow Maps by Sam Oates' valueswidth=1 size='680 300' position='320 140'"); 
+	TwAddButton(m_readmebar.bar, "line0", NULL, NULL, "label='Sam Oates. University of Teesside. Student ID J9060283.'");
+	TwAddButton(m_readmebar.bar, "line1", NULL, NULL, "label=' '");
+	TwAddButton(m_readmebar.bar, "line2", NULL, NULL, "label='This application is a deferred renderer implementing translucent shadow maps in OpenGL 3.2'");
+	TwAddButton(m_readmebar.bar, "line3", NULL, NULL, "label='There are five spot lights within the scene. One behind each model and two skylights.'");
+	TwAddButton(m_readmebar.bar, "line4", NULL, NULL, "label=' '");
+	TwAddButton(m_readmebar.bar, "line5", NULL, NULL, "label='Each light within the scene can have its color and near clip plain changed.'");
+	TwAddButton(m_readmebar.bar, "line6", NULL, NULL, "label='Each light can also be disabled. This is done via the light settings bar to the top left.'");
+	TwAddButton(m_readmebar.bar, "line7", NULL, NULL, "label='Using the lighting settings bar settings for the shadows can also be modified.'");
+	TwAddButton(m_readmebar.bar, "line8", NULL, NULL, "label='Within the scene data there is a flag for which lights project shadows. Enabling the'");
+	TwAddButton(m_readmebar.bar, "line9", NULL, NULL, "label='\"Respect Shadow Flag\" option will enforce this behavior.'");
+	TwAddButton(m_readmebar.bar, "line10", NULL, NULL, "label=' '");
+	TwAddButton(m_readmebar.bar, "line11", NULL, NULL, "label='It is also worth noting that the camera will fly around the scene by default.'");
+	TwAddButton(m_readmebar.bar, "line12", NULL, NULL, "label='This behavior can be toggled by pressing the \"E\" key on your keyboard.'");
+	TwAddButton(m_readmebar.bar, "line13", NULL, NULL, "label=' '");
+	TwAddButton(m_readmebar.bar, "line14", NULL, NULL, "label='Should the animated camera be disabled, you can explorer the scene using the mouse and WASD keys.'");
+	TwAddButton(m_readmebar.bar, "line15", NULL, NULL, "label=' '");
+	TwAddButton(m_readmebar.bar, "line16", OnCloseInfo, this, "label='Click here to close this window'");
 }
 
 void MyView::ShowProfilingPieChart(
@@ -1156,4 +1113,9 @@ void MyView::ShowProfilingPieChart(
 	timerIDs.push_back(m_timer[Timer::LBuffer_SpotLightSecondPass4]);
 	timerIDs.push_back(m_timer[Timer::PostProcessing]);
 	ProFy::GetInstance().OutputTimers("AverageFrameTimes", timerIDs, GraphType::Pie, open); 
+}
+
+void MyView::CloseInformation()
+{
+	TwDefine("'Translucent Shadow Maps by Sam Oates' visible=false");
 }

@@ -10,8 +10,9 @@ MyScene()
     time_seconds_ = 0.f;
 
     if (!readFile("assets/sponza_with_friends.tcf")) {
-        std::cerr << "Failed to read sponza_with_friends.tcf data file"
-                  << std::endl;
+		if (!readFile("sponza_with_friends.tcf")) {
+			std::cerr << "Failed to read sponza_with_friends.tcf data file" << std::endl;
+		}
     }
 
     animate_camera_ = false;

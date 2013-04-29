@@ -206,7 +206,6 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	float fatt = smoothstep(0.0f, 1.0f, (spotLight - cos(cone * 0.5f)) * 15.0f) * spotlight_intensity;
     vec3 lighting = vec3(0);
 
-	//translucent = false;
 	if (translucent && hasTranslucency)
 	{
 		const int sampleSize = 8;

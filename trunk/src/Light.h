@@ -58,4 +58,15 @@ public:
 	void								Update(
 											const MyScene::Light &light
 										);
+
+	void								SetColor(
+											float red,
+											float green,
+											float blue
+										)
+										{
+											Color[0] = red;
+											Color[1] = green;
+											Color[2] = blue;
+										}
 };

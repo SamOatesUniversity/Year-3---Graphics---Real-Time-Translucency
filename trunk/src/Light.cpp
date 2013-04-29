@@ -1,16 +1,16 @@
 #include "Light.h"
 
-eShadowMapSize Light::ShadowMapSize = ShadowMapSize512;
+eShadowMapSize Light::ShadowMapSize = ShadowMapSize1024;
 eShadowMapSize Light::OldShadowMapSize = ShadowMapSize;
 
 Light::Light( MyScene::Light &light ) :
 		Enabled(true),
 		HasTranslucency(true),
 		Intensity(1.0f),
-		NearPlane(1.0f)
+		NearPlane(1.0f),
+		m_light(light)
 {
 	Color[0] = Color[1] = Color[2] = Color[3] = 1.0f;
-	m_light = light;
 }
 
 void Light::CalculateWorldMatrix(glm::vec3 sceneUp)
