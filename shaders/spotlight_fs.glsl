@@ -113,8 +113,7 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 
 	vec4 xin = GetXin(sampleOffset);
 	vec4 surfaceNormal = GetSurfaceNormal(sampleOffset);
-	vec4 depth = GetDepth(sampleOffset);
-
+	
 	const float val = 0.5f;
 	const vec4 sigmaScattering = vec4(val, val, val, val);									// os
 	const vec4 sigmaAbsorbant = vec4(0);													// oa
@@ -221,7 +220,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
     return lighting * spotlight_color.xyz;
 }
 
-vec3 Shadow(vec4 worldPosition)
+vec3 Shadow(vec4 worldPosition, bool translucent)
 {
 	vec4 hpos_from_light = light_projection_xform * light_view_xform * worldPosition;
     float light_to_point_depth = hpos_from_light.z / hpos_from_light.w;
@@ -241,7 +240,7 @@ vec3 Shadow(vec4 worldPosition)
         for( int y = -enableShadowPCF; y <= enableShadowPCF; y += kernal )
 		{
 			float light_to_first_hit_depth = texture(sampler_shadow_map, shadow_texcoord + vec2(x * oneOverShadowMapSize, y * oneOverShadowMapSize)).x;
-			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? 0.2f : 1.0f;
+			shadowing += (light_to_first_hit_depth + bias) < light_to_point_depth ? translucent ? 1.0f : 0.1f : 1.0f;
 			count++;
 		}
 	}
@@ -264,7 +263,7 @@ vec3 SpotLightPass()
 
 	if (cast_shadows == 1)
 	{
-		lighting *= Shadow(worldPosition); 
+		lighting *= Shadow(worldPosition, worldNormal.w >= 0.01f); 
 	}
 
 	return lighting;
