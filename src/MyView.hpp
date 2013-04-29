@@ -72,6 +72,9 @@ public:
 													bool open										//!< 
 												) const;
 
+												//! 
+	void										CloseInformation();
+
 private:
 
     void
@@ -139,7 +142,6 @@ private:
 	
 												//! 
 	void										CreateTweakBar();
-
 private:
 
 	RenderFlags									m_flags;
@@ -172,7 +174,6 @@ private:
 	std::map<char*, Shader*>					m_shader;				//!< 
 	std::vector<Mesh>							m_meshes;				//!<
 	Mesh										m_meshQuad;				//!< 
-	Mesh										m_sphereMesh;			//!< The mesh that represents a point lights volume
 	Mesh										m_coneMesh;				//!< The mesh that represents a cone lights volume
 
 	std::vector<Light*>							m_light;
@@ -233,5 +234,9 @@ private:
 		TwBar *bar;
 		eTranslucencyMode translucencyMode;
 	}											m_renderbar;
+
+	struct {
+		TwBar *bar;
+	}											m_readmebar;
 
 };

@@ -249,12 +249,15 @@ void Window::
 onMouseWheel(int pos)
 {
     // NB: GLFW limitation limits operation to a single window
-    Window* window = main_window_.get();
-    if (window != nullptr && window->controller_ != nullptr) {
-        window->controller_
-          ->windowControlMouseWheelMoved(window->shared_from_this(),
-                                         pos);
-    }
+	if (!TwEventMouseWheelGLFW(pos)) 
+	{
+		Window* window = main_window_.get();
+		if (window != nullptr && window->controller_ != nullptr) {
+			window->controller_
+			  ->windowControlMouseWheelMoved(window->shared_from_this(),
+											 pos);
+		}
+	}
 }
 
 void Window::
