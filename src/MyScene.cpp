@@ -180,7 +180,7 @@ camera() const
 {
     Camera cam;
     if (animate_camera_) {
-        const float t = -0.3f * time_seconds_;
+        const float t = -0.1f * time_seconds_;
         const float ct = cosf(t);
         const float rx = ct < 0 ? -120.f : 120.f;
         const float st = sinf(t);

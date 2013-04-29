@@ -116,46 +116,70 @@ vec4 CalculateTransformFunction(vec4 xout, vec2 sampleOffset)
 	
 	const float val = 0.5f;
 	const vec4 sigmaScattering = vec4(val, val, val, val);									// os
-	const vec4 sigmaAbsorbant = vec4(0);													// oa
+	const vec4 sigmaAbsorbant = vec4(0.0f);													// oa
 
 	const float g = 0.0f;																	// g
-	vec4 sigmaPrimeScattering = (1 - g) * sigmaScattering;									// o's
+	//vec4 sigmaPrimeScattering = (1 - g) * sigmaScattering;								// o's
+	const vec4 sigmaPrimeScattering = sigmaScattering;
+	
+	//vec4 sigmaExtinction = sigmaAbsorbant + sigmaScattering;								// ot
+	const vec4 sigmaExtinction = sigmaScattering;
+	
+	//vec4 sigmaPrimeExtinction = sigmaAbsorbant + sigmaPrimeScattering;					// o't
+	const vec4 sigmaPrimeExtinction = sigmaScattering;
 
-	vec4 sigmaExtinction = sigmaAbsorbant + sigmaScattering;								// ot
-	vec4 sigmaPrimeExtinction = sigmaAbsorbant + sigmaPrimeScattering;						// o't
-
-	vec4 alphaPrime = sigmaPrimeScattering / sigmaPrimeExtinction;							// &'
-
+	//vec4 alphaPrime = sigmaPrimeScattering / sigmaPrimeExtinction;						// &'
+	const vec4 alphaPrime = vec4(1.0f);
+	
 	const float fourPi = 12.566370614359172953850573533118f;								//4pi
 
 	///////////////////////////////////////////////////////////
 
-	vec4 zr = 1 / sigmaPrimeExtinction;														// zr
-	vec4 otr = sqrt(3 * sigmaAbsorbant * sigmaPrimeExtinction);								// otr
+	//vec4 zr = 1 / sigmaPrimeExtinction;													// zr
+	const vec4 zr = vec4(2.0f);
+	
+	//vec4 otr = sqrt(3 * sigmaAbsorbant * sigmaPrimeExtinction);							// otr
+	const vec4 otr = vec4(0.0f);															// otr
+	
 	vec4 xr = xin - dot(zr, surfaceNormal);
 	float dr = length(xr - xout);															// dr
 
 	///////////////////////////////////////////////////////////
 
-	const float n = 1.6f;
-	float Fdr = (-1.440 / pow(n, 2)) + (0.710 / n) + 0.0668 + (0.0636 * n);
+	//const float n = 1.6f;
+	//float Fdr = (-1.440 / pow(n, 2)) + (0.710 / n) + 0.0668 + (0.0636 * n);
+	const float Fdr = 0.04981f;
 
-	vec4 D = 1.0f / (3.0f * sigmaPrimeExtinction);
-	float A = (1 + Fdr) / (1 - Fdr);
-	vec4 zv = zr + (4.0f * A * D);
+	//vec4 D = 1.0f / (3.0f * sigmaPrimeExtinction);
+	const vec4 D = vec4(0.6666666666666667f);
+	
+	//float A = (1 + Fdr) / (1 - Fdr);
+	const float A = 1.104842189456845f;
+	
+	//vec4 zv = zr + (4.0f * A * D);
+	const vec4 zv = vec4(4.946245838551587f);
 
 	vec4 xv = xin + dot(zv, surfaceNormal);
 	float dv = length(xv - xout);
 
 	///////////////////////////////////////////////////////////
 
-	const float distAtten = 1.85f;
+	const float distAtten = 2.20f;
 
-	vec4 res1 = alphaPrime / fourPi;
-	vec4 res2 = zr * (otr * dr + 1.0f);
-	vec4 res3 = pow(vec4(e), -otr * dr) / (sigmaPrimeExtinction * pow(dr, distAtten));
-	vec4 res4 = zv * (otr * dv + 1.0f);
-	vec4 res5 = pow(vec4(e), -otr * dv) / (sigmaPrimeExtinction * pow(dv, distAtten));
+	//vec4 res1 = alphaPrime / fourPi;
+	const float res1 = 0.0795774715459477f;
+	
+	//vec4 res2 = zr * (otr * dr + 1.0f);
+	const vec4 res2 = vec4(2.0f); 
+	
+	//vec4 res3 = pow(vec4(e), -otr * dr) / (sigmaPrimeExtinction * pow(dr, distAtten));
+	vec4 res3 = 1.0f / (sigmaPrimeExtinction * pow(dr, distAtten));
+	
+	//vec4 res4 = zv * (otr * dv + 1.0f);
+	const vec4 res4 = vec4(4.946245838551587f);
+	
+	//vec4 res5 = pow(vec4(e), -otr * dv) / (sigmaPrimeExtinction * pow(dv, distAtten));
+	vec4 res5 = 1.0f / (sigmaPrimeExtinction * pow(dv, distAtten));
 
 	vec4 Rd = res1 * (res2 * res3 + res4 * res5);
 
@@ -185,8 +209,8 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	//translucent = false;
 	if (translucent && hasTranslucency)
 	{
-		const int sampleSize = 16;
-		int sampleKernel = 8;
+		const int sampleSize = 8;
+		int sampleKernel = 4;
 		int count = 0;
 
 		vec3 xout = worldPosition.xyz;
@@ -230,7 +254,7 @@ vec3 Shadow(vec4 worldPosition, bool translucent)
 
     vec2 shadow_texcoord = vec2(xCoord, yCoord);
 
-	const float bias = 0.0025f;
+	const float bias = 0.005f;
 	const int kernal = 1;
 
 	float shadowing = 0.0f;
@@ -259,7 +283,7 @@ vec3 SpotLightPass()
 	vec3 materialColor = GetMaterialColorFromID(materialInfo.z);
 	float materialShininess = materialInfo.w;
 
-	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 1.25f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
+	vec3 lighting = SpotLight(worldPosition, worldNormal.xyz, spotlight_position, spotlight_direction, spotlight_coneangle * 2.0f, spotlight_range, materialColor, worldNormal.w >= 0.01f);
 
 	if (cast_shadows == 1)
 	{

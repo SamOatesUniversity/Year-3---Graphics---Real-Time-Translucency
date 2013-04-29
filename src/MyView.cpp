@@ -721,6 +721,10 @@ void MyView::RenderGBuffer(
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL); 
 
+	// Enable culling
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
 	// Set our shader to use to the gbuffer shader
 	const Shader *const gbuffer = m_shader["gbuffer"];
 	glUseProgram(gbuffer->GetProgram());
@@ -758,6 +762,9 @@ void MyView::RenderGBuffer(
 	// disable depth testing
 	glDisable(GL_DEPTH_TEST);
 		
+	//
+	glDisable(GL_CULL_FACE);
+
 	// clear the shader to default
 	glUseProgram(0);
 
@@ -778,6 +785,8 @@ void MyView::RenderLBuffer(
 	glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	glDisable(GL_DEPTH_TEST);
+
 	// Render the directional light 
 	ProFy::GetInstance().StartTimer(m_timer[Timer::LBuffer_DirectionalLight]);
 	DrawDirectionalLight(camera);
@@ -786,6 +795,8 @@ void MyView::RenderLBuffer(
 
 	// Draw the point lights in the scene
 	DrawSpotLights(camera, aspect_ratio);
+
+	
 }
 
 /*
@@ -815,6 +826,8 @@ void MyView::PerformPostProcessing()
 
 	glUseProgram(0);
 	glBindVertexArray(0);
+
+	glEnable(GL_DEPTH_TEST);
 }
 
 /*

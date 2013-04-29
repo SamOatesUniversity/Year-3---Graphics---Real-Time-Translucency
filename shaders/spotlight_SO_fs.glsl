@@ -130,7 +130,7 @@ vec3 SpotLight(vec4 worldPosition, vec3 worldNormal, vec3 position, vec3 directi
 	}
 	else
 	{
-		lighting = (spotLight > cos(cone)) ? colour * clamp(dot(L, worldNormal), 0, 1) * fatt * 0.2f : vec3(0.0f);
+		lighting = (spotLight > cos(cone)) ? colour * clamp(dot(L, worldNormal), 0, 1) * fatt * 0.5f : vec3(0.0f);
 	}
 
     return lighting * spotlight_color.xyz;
